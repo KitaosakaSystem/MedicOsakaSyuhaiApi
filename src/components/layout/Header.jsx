@@ -1,5 +1,6 @@
 // src/components/layout/Header.jsx
 import { ChevronLeft } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const Header = () => {
@@ -10,6 +11,9 @@ const Header = () => {
   const handleBack = () => {
     navigate(-1);
   };
+
+  // store内の値を取得
+  const headerText = useSelector(state => state.header.mess);
 
   return (
     <div className="bg-blue-600 shadow-sm">
@@ -28,7 +32,13 @@ const Header = () => {
           </h1>
         </div>
       </div>
+      <div className="bg-teal-600 shadow-sm">
+        <div className="p-4">
+         <h1 className="text-lg font-medium text-white">{headerText} </h1>
+       </div>
+      </div>
     </div>
+
   );
 };
 

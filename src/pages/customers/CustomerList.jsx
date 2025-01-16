@@ -2,9 +2,19 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronRight, MapPin, Phone } from 'lucide-react';
 import chatStore from '../../store/chatStore';
 
+import { useDispatch } from 'react-redux';
+import { changeText } from '../../store/slice/headerTextSlice';
+import { useEffect } from 'react';
+
 const CustomerList = () => {
   const navigate = useNavigate();
   const setCurrentFacility = chatStore(state => state.setCurrentFacility);
+
+  // actionを操作するための関数取得
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(changeText('62コース　顧客一覧'))
+  })
 
   // サンプルデータ
   const customers = [
@@ -55,12 +65,6 @@ const CustomerList = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
-      {/* ヘッダー */}
-      <div className="bg-teal-600 shadow-sm">
-        <div className="p-4">
-          <h1 className="text-lg font-medium text-white">62コース　顧客一覧</h1>
-        </div>
-      </div>
       <div className="p-4 space-y-4">
         {customers.map(customer => (
           <div 

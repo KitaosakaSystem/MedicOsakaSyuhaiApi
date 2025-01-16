@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { 
   Bell, 
   Moon, 
@@ -10,8 +10,17 @@ import {
   HelpCircle,
   LogOut
 } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { changeText } from '../../store/slice/headerTextSlice';
 
 const Settings = () => {
+
+  // actionを操作するための関数取得
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(changeText('設定'))
+  })
+
   // 設定の状態管理
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -81,12 +90,6 @@ const Settings = () => {
 
   return (
     <div className="flex-1 flex flex-col bg-sky-50">
-      {/* ヘッダー */}
-      <div className="bg-teal-600 shadow-sm">
-        <div className="p-4">
-          <h1 className="text-lg font-medium text-white">設定</h1>
-        </div>
-      </div>
 
       {/* 設定リスト */}
       <div className="flex-1 overflow-y-auto">

@@ -1,7 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapPin, Clock, Building2, ChevronRight } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { changeText } from '../../store/slice/headerTextSlice';
 
 const CourseList = () => {
+
+    // actionを操作するための関数取得
+    const dispatch = useDispatch();
+    useEffect(() => {
+      dispatch(changeText('コース担当一覧'))
+    })
+
   // サンプルデータ
   const courses = [
     {
@@ -39,13 +48,6 @@ const CourseList = () => {
 
   return (
     <div className="flex-1 flex flex-col bg-sky-50">
-      {/* ヘッダー */}
-      <div className="bg-teal-600 shadow-sm">
-        <div className="p-4">
-          <h1 className="text-lg font-medium text-white">コース担当一覧</h1>
-        </div>
-      </div>
-
       {/* コースリスト */}
       <div className="flex-1 overflow-y-auto p-4">
         {courses.map(course => (

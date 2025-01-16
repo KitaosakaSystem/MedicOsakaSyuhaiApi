@@ -1,8 +1,12 @@
 // src/components/layout/Layout.jsx
 import Header from './Header';
 import BottomNav from './BottomNav';
+import React, { useState, useContext } from 'react';
 
 const Layout = ({ children }) => {
+
+  const [count, setCount] = useState(0)
+
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center">
       <div className="w-full md:max-w-2xl lg:max-w-3xl h-screen md:h-[800px] md:my-8 bg-sky-50 

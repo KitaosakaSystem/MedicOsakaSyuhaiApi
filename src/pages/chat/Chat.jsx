@@ -3,7 +3,16 @@ import  {  useEffect, useRef, useState } from 'react';
 import ChatMessage from '../../components/chat/ChatMessage';
 import ActionButtons from '../../components/chat/ActionButtons';
 
+import { useDispatch } from 'react-redux';
+import { changeText } from '../../store/slice/headerTextSlice';
+
 const Chat = () => {
+
+  // actionを操作するための関数取得
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(changeText('集配連絡＞最初のクリニック'))
+  })
 
   const [messages, setMessages] = useState([
     { id: 1, text: '東京中央病院の集配予定を確認いたしました', time: '14:20', isSystem: true },
@@ -48,28 +57,26 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-y-auto  bg-gray-50">
-      {/* ヘッダー */}
-      <div className="bg-teal-600 shadow-sm">
-        <div className="p-4">
-          <h1 className="text-lg font-medium text-white">集配連絡＞テスト病院</h1>
-        </div>
+
+      {/* Sliceで定義したactionをdispatch経由で呼び出す */}
+      <button aria-label="hello" onClick={() => dispatch(changeText('集配連絡＞うんこクリニック'))}>
+          こんにちは
+      </button>
+
+      {/* メッセージ */}
+      <div className="flex-1  p-4 " >
+          {messages.map(message => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
       </div>
 
-
-        {/* メッセージ */}
-        <div className="flex-1  p-4 " >
-            {messages.map(message => (
-              <ChatMessage key={message.id} message={message} />
-            ))}
-        </div>
-
-        <div className="bg-white border-t p-4">
-          <ActionButtons 
-            selectedAction={selectedAction}
-            onActionSelect={handleActionSelect}
-            onSend={handleSend}
-          />
-        </div>
+      <div className="bg-white border-t p-4">
+        <ActionButtons 
+          selectedAction={selectedAction}
+          onActionSelect={handleActionSelect}
+          onSend={handleSend}
+        />
+      </div>
 
         <div ref={messagesEndRef} />
     </div>
