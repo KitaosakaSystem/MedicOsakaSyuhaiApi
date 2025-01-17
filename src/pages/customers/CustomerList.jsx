@@ -4,9 +4,13 @@ import chatStore from '../../store/chatStore';
 
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { db } from '../../firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 const CustomerList = () => {
+
   const navigate = useNavigate();
   const setCurrentFacility = chatStore(state => state.setCurrentFacility);
 
@@ -14,6 +18,23 @@ const CustomerList = () => {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(changeText('62コース　顧客一覧'))
+  })
+
+  const [documents,setDocuments] = useState([]);
+  const collectionRef = query(collection(db,"customer"))
+  useEffect(() => {
+    onSnapshot(collectionRef,(querySnapshot) => {
+      const channelsResults = [];
+      querySnapshot.docs.forEach((doc) => channelsResults.push({
+        customer_code: doc.id,
+        customer:doc.data(),
+      }));
+      setDocuments(channelsResults);
+    });
+  },[])
+
+  documents.map((doc) =>{
+    console.log("顧客コード:" + doc.customer_code + " 顧客名:" + doc.customer.customer_name);
   })
 
   // サンプルデータ
