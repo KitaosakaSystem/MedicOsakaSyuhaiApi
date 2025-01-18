@@ -5,13 +5,17 @@ import ActionButtons from '../../components/chat/ActionButtons';
 
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
+import { useSelector } from 'react-redux';
 
 const Chat = () => {
+
+  const userCode =  useSelector(state => state.userData.userCode);
+  const userName =  useSelector(state => state.userData.userName);
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(changeText('集配連絡＞最初のクリニック'))
+    dispatch(changeText('(' + userCode + ')' + userName))
   })
 
   const [messages, setMessages] = useState([
@@ -57,11 +61,6 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-y-auto  bg-gray-50">
-
-      {/* Sliceで定義したactionをdispatch経由で呼び出す */}
-      <button aria-label="hello" onClick={() => dispatch(changeText('集配連絡＞うんこクリニック'))}>
-          こんにちは
-      </button>
 
       {/* メッセージ */}
       <div className="flex-1  p-4 " >

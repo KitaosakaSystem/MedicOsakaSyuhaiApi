@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, MapPin, Phone } from 'lucide-react';
+import { MapPin, Phone } from 'lucide-react';
 import chatStore from '../../store/chatStore';
 
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
+import { changeUserData } from '../../store/slice/userDataSlice';
 import { useEffect, useState } from 'react';
 
 import { db } from '../../firebase';
@@ -16,71 +17,34 @@ const CustomerList = () => {
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
-  useEffect(() => {
+  useEffect(() => { 
     dispatch(changeText('62コース　顧客一覧'))
   })
 
-  const [documents,setDocuments] = useState([]);
+  const [customers,setCustomers] = useState([]);
   const collectionRef = query(collection(db,"customer"))
   useEffect(() => {
     onSnapshot(collectionRef,(querySnapshot) => {
-      const channelsResults = [];
-      querySnapshot.docs.forEach((doc) => channelsResults.push({
+      const customerResults = [];
+      querySnapshot.docs.forEach((doc) => customerResults.push({
         customer_code: doc.id,
         customer:doc.data(),
       }));
-      setDocuments(channelsResults);
+      setCustomers(customerResults);
     });
   },[])
 
-  documents.map((doc) =>{
-    console.log("顧客コード:" + doc.customer_code + " 顧客名:" + doc.customer.customer_name);
-  })
-
-  // サンプルデータ
-  const customers = [
-    {
-      id: 1,
-      name: '東京中央病院',
-      address: '東京都新宿区西新宿6-7-1',
-      phone: '03-1234-5678',
-      schedule: '月・水・金',
-      visitTime: '14:00-15:00',
-      status: 'online'
-    },
-    {
-      id: 2,
-      name: '横浜総合病院',
-      address: '神奈川県横浜市西区みなとみらい3-1-1',
-      phone: '045-1234-5678',
-      schedule: '火・木',
-      visitTime: '15:00-16:00',
-      status: 'offline'
-    },
-    {
-      id: 3,
-      name: '千葉メディカルセンター',
-      address: '千葉県千葉市中央区新千葉1-1-1',
-      phone: '043-1234-5678',
-      schedule: '月・木',
-      visitTime: '13:00-14:00',
-      status: 'online'
-    },
-    // スクロールをテストするためのダミーデータ
-    ...Array.from({ length: 10 }, (_, i) => ({
-      id: i + 4,
-      name: `医療施設${i + 1}`,
-      address: `東京都港区南麻布${i + 1}-${i + 1}-${i + 1}`,
-      phone: `03-9999-${String(i + 1).padStart(4, '0')}`,
-      schedule: '月・水・金',
-      visitTime: '09:00-10:00',
-      status: i % 2 === 0 ? 'online' : 'offline'
-    }))
-  ];
+  // customers.map((doc) =>{
+  //   console.log("顧客コード:" + doc.customer_code + " 顧客名:" + doc.customer.customer_name);
+  // })
 
   // 顧客選択時のハンドラー
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);
+    dispatch(changeUserData({
+      userCode:customer.customer_code,
+      userName:customer.customer.customer_name,
+    }))
     navigate('/chat');
   };
 
@@ -89,14 +53,16 @@ const CustomerList = () => {
       <div className="p-4 space-y-4">
         {customers.map(customer => (
           <div 
-            key={customer.id}
+            key={customer.customer_code}
             onClick={() => handleCustomerSelect(customer)}
             className="bg-white rounded-lg shadow cursor-pointer hover:bg-gray-50 transition-colors"
           >
             <div className="p-4">
               {/* 施設名とステータス */}
               <div className="flex justify-between items-start mb-2">
-                <h2 className="text-lg font-medium">{customer.name}</h2>
+                <h2 className="text-lg font-medium">
+                  {customer.customer_code + ' ' + customer.customer.customer_name}
+                </h2>
                 <span 
                   className={`px-2 py-1 rounded-full text-xs ${
                     customer.status === 'online' 
@@ -111,25 +77,17 @@ const CustomerList = () => {
               {/* 住所 */}
               <div className="flex items-center text-gray-600 mb-2">
                 <MapPin size={16} className="mr-2" />
-                <span className="text-sm">{customer.address}</span>
+                <span className="text-sm">{customer.customer.address}</span>
               </div>
 
               {/* 電話番号 */}
               <div className="flex items-center text-gray-600 mb-2">
                 <Phone size={16} className="mr-2" />
-                <span className="text-sm">{customer.phone}</span>
+                <span className="text-sm">{customer.customer.phone}</span>
               </div>
 
               {/* 訪問スケジュール */}
-              <div className="mt-4 pt-4 border-t">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-gray-600">訪問日：{customer.schedule}</p>
-                    <p className="text-sm text-gray-600">時間帯：{customer.visitTime}</p>
-                  </div>
-                  <ChevronRight className="text-gray-400" size={20} />
-                </div>
-              </div>
+
             </div>
           </div>
         ))}
