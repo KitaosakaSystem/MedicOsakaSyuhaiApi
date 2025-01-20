@@ -28,7 +28,7 @@ const Header = () => {
             </button>
           )}
           <h1 className="text-base text-white font-medium">
-            メディック集配連絡システム
+            メディック.web集配連絡システム ver0.1.0
           </h1>
         </div>
       </div>

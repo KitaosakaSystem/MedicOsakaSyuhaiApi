@@ -19,7 +19,7 @@ const Chat = () => {
   })
 
   const [messages, setMessages] = useState([
-    { id: 1, text: '東京中央病院の集配予定を確認いたしました', time: '14:20', isSystem: true },
+    { id: 1, text: '集配予定を確認いたします', time: '14:20', isSystem: true },
     { id: 2, text: '検体あり', time: '14:21', isUser: true },
     { id: 3, text: '承知いたしました。回収に向かいます。', time: '14:22', isSystem: true }
   ]);
@@ -42,9 +42,9 @@ const Chat = () => {
     if (!selectedAction) return;
 
     const messageText = {
-      'collect': '検体あり',
-      'no-collect': '検体なし',
-      'recollect': '再集配'
+      'collect': '〇検体あり',
+      'no-collect': 'X検体なし',
+      'recollect': '▼再集配'
     }[selectedAction];
 
     if (messageText) {
