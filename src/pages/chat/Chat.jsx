@@ -64,20 +64,21 @@ const Chat = () => {
 
       {/* メッセージ */}
       <div className="flex-1  p-4 " >
-          {messages.map(message => (
-            <ChatMessage key={message.id} message={message} />
-          ))}
+              {messages.map(message => (
+                <ChatMessage key={message.id} message={message} />
+              ))}
       </div>
 
-      <div className="bg-white border-t p-4">
-        <ActionButtons 
-          selectedAction={selectedAction}
-          onActionSelect={handleActionSelect}
-          onSend={handleSend}
-        />
-      </div>
-
-        <div ref={messagesEndRef} />
+      {userCode &&(
+        <div className="bg-white border-t p-4">
+          <ActionButtons 
+            selectedAction={selectedAction}
+            onActionSelect={handleActionSelect}
+            onSend={handleSend}
+          />
+        </div>
+      )} 
+      <div ref={messagesEndRef} />
     </div>
   );
 };

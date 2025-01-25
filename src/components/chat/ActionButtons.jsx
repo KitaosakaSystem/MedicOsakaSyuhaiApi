@@ -2,9 +2,9 @@ import { Check, X, RotateCcw, Send } from 'lucide-react';
 
 const ActionButtons = ({ selectedAction, onActionSelect, onSend }) => {
   const actions = [
-    { id: 'collect', icon: Check, label: '〇検体あり', size: 32 },
-    { id: 'no-collect', icon: X, label: '×検体なし', size: 32 },
-    { id: 'recollect', icon: RotateCcw, label: '▼再集配', size: 32 },
+    { id: 'collect', icon: Check, label: '検体あり', size: 32 },
+    { id: 'no-collect', icon: X, label: '検体なし', size: 32 },
+    { id: 'recollect', icon: RotateCcw, label: '再集配', size: 32 },
     { id: 'send', icon: Send, label: '送信', size: 18 }
   ];
 

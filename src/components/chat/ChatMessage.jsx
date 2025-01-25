@@ -8,8 +8,10 @@ const ChatMessage = ({ message }) => {
       <div
         className={`mb-4 ${isUser ? 'flex justify-end' : 'flex justify-start'}`}
       >
-        <div
-          className={`max-w-xs p-3 rounded-lg shadow-sm ${
+        {isUser &&(
+          <p className={`text-sm mt-1 text-gray-500 flex items-end `}>{time}</p>
+        )}
+        <div className={`max-w-xs p-3 rounded-lg shadow-sm ${
             isUser
               ? 'bg-teal-500 text-white'
               : 'bg-white text-gray-800'
@@ -20,13 +22,12 @@ const ChatMessage = ({ message }) => {
             {time}
           </p> */}
         </div>
-        <p className={`text-sm mt-1 text-gray-500 flex items-end `}>
-          {time}
-        </p>
-    </div>
 
+        {!isUser &&(
+          <p className={`text-sm mt-1 text-gray-500 flex items-end `}>{time}</p>
+        )}        
+      </div>
     </div>
-
   );
 };
 

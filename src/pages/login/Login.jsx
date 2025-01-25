@@ -3,8 +3,11 @@ import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { db } from '../../firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useNavigate} from 'react-router-dom';
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
+
+    const navigate = useNavigate();
 
       // actionを操作するための関数取得
     const dispatch = useDispatch();
@@ -59,9 +62,13 @@ const Login = () => {
             // ログイン成功時の処理
             localStorage.setItem('userId', userId);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'user');
+            localStorage.setItem('isAuthenticated', 'true');
             
             // ログイン成功後のリダイレクトなど
             // 例: window.location.href = '/dashboard';
+            //navigate("/");
+            onLoginSuccess();
+            console.log("推移");
             
           } catch (error) {
             console.error('ログインエラー:', error);
@@ -72,9 +79,8 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex justify-center">
-            {/* メインのアプリケーションコンテナ */}
-            <div className="w-full md:max-w-md lg:max-w-lg h-screen md:h-[800px] md:my-8 bg-sky-50 flex flex-col md:rounded-lg md:shadow-lg">
+        <div className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="p-4 space-y-4">
                 {/* ログインコンテンツを中央に配置 */}
                 <div className="flex-1 flex items-center justify-center p-6">
                 <div className="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
