@@ -22,31 +22,11 @@ const Settings = () => {
   })
 
   // 設定の状態管理
-  const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [sound, setSound] = useState(true);
 
   // 設定セクションの定義
   const settingSections = [
-    {
-      title: '通知設定',
-      items: [
-        {
-          icon: Bell,
-          label: 'プッシュ通知',
-          type: 'toggle',
-          value: notifications,
-          onChange: () => setNotifications(!notifications)
-        },
-        {
-          icon: Volume2,
-          label: '通知音',
-          type: 'toggle',
-          value: sound,
-          onChange: () => setSound(!sound)
-        }
-      ]
-    },
     {
       title: '一般設定',
       items: [
@@ -68,16 +48,7 @@ const Settings = () => {
     {
       title: 'その他',
       items: [
-        {
-          icon: Lock,
-          label: 'プライバシー設定',
-          type: 'link'
-        },
-        {
-          icon: HelpCircle,
-          label: 'ヘルプ・お問い合わせ',
-          type: 'link'
-        },
+
         {
           icon: LogOut,
           label: 'ログアウト',
@@ -151,7 +122,7 @@ const Settings = () => {
 
         {/* バージョン情報 */}
         <div className="mt-6 mb-8 text-center text-gray-500 text-sm">
-          バージョン 1.0.0
+          バージョン 0.1.0
         </div>
       </div>
     </div>
