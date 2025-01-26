@@ -13,7 +13,8 @@ import {
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { db } from '../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import ChatRoomCreator  from '../../hooks/useMakeChatRoom'
 
 const Settings = () => {
 
@@ -64,7 +65,28 @@ const Settings = () => {
 
   //console.log("loginName",loginName);
 
-  // 設定の状態管理
+  // チャットルーム作成
+  const createChatRoom = async () => {
+        try {
+            const chatData = {
+                room_id: "ch789",
+                customer_id: "c111",
+                staff_id: "s789",
+                pickup_status: "1",
+                date: new Date().toISOString().split('T')[0],
+                created_at: serverTimestamp(),
+            };
+
+            console.log("chat_Data",chatData);
+            const docRef = await addDoc(collection(db, 'chat_rooms'), chatData);
+            console.log('チャットルームが作成されました:', docRef.id);
+
+        } catch (error) {
+            console.error('エラーが発生しました:', error);
+        }
+  };
+
+  // 設定の状態管理---------------------------------------------------------------------
   const [customers,setCustomers] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
 
@@ -72,6 +94,7 @@ const Settings = () => {
     console.log('保存されたデータ:', { selectedCourse });
     localStorage.setItem('todayRoute', selectedCourse);
     setTodayRoute(localStorage.getItem('todayRoute'));
+    createChatRoom();
   };
 
   const handleLogout = () => {
