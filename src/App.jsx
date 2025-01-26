@@ -20,7 +20,7 @@ const App = () => {
     // 初回レンダリング時にローカルストレージをチェック
     const auth = localStorage.getItem('isAuthenticated');
     if (auth === 'true') {
-      setIsAuthenticated(true);
+      setIsAuthenticated(true);  
     }
   }, []);
 

@@ -52,8 +52,8 @@ const Login = ({ onLoginSuccess }) => {
               // 4桁の場合はCustomerテーブルを参照
               userData = await validateUser(userId, password, 'customer');
             } else if (userId.length === 7) {
-              // 7桁の場合はusersテーブルを参照
-              userData = await validateUser(userId, password, 'users');
+              // 7桁の場合はstaffテーブルを参照
+              userData = await validateUser(userId, password, 'staff');
             } else {
               setError('無効なユーザーIDです。4桁または7桁で入力してください。');
               return;
@@ -62,6 +62,7 @@ const Login = ({ onLoginSuccess }) => {
             // ログイン成功時の処理
             localStorage.setItem('userId', userId);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'user');
+            localStorage.setItem('todayRoute', '');
             localStorage.setItem('isAuthenticated', 'true');
             
             // ログイン成功後のリダイレクトなど

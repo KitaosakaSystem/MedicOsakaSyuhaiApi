@@ -33,13 +33,13 @@ const BottomNav = () => {
         <span className="text-sm text-teal-700">メニュー</span>
         {isNavVisible ? 
           <ChevronDown size={20} className="text-teal-700" /> : 
-          <ChevronUp size={20} className="text-teal-700" />
+          <ChevronUp size={20} className="text-teal-700  mb-12" />
         }
       </button>
 
       {/* Bottom Navigation */}
       {isNavVisible && (
-        <div className="bg-white border-t border-teal-100 md:rounded-b-lg">
+        <div className="bg-white border-t border-teal-100 md:rounded-b-lg  mb-8">
           <div className="grid grid-cols-4 py-2">
             {navigationItems.map(({ path, icon: Icon, label }) => (
               <button 

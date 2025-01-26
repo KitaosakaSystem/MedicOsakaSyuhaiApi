@@ -12,35 +12,78 @@ import {
 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
+import { db } from '../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const Settings = () => {
 
-  // actionを操作するための関数取得
+  // ヘッダー書き換え
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(changeText('設定'))
+    dispatch(changeText('設定'))   
   })
 
-  // 設定の状態管理
-  const [darkMode, setDarkMode] = useState(false);
-  const [sound, setSound] = useState(true);
+  //社員に設定されたコースの検索--------------------------------------------
+  const [loginName, setLoginName] = useState("");
+  const [todayRoute,setTodayRoute] = useState("");
+  const [routeNames, setRouteNames] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+
+    // 初回レンダリング時にローカルストレージをチェック
+    setTodayRoute(localStorage.getItem('todayRoute'));
+
+    const fetchData = async () => {
+      try {
+        const docRef = doc(db, 'staff', '0002580');
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          console.log("検索",docSnap.data().name);
+          setLoginName(docSnap.data().name);        
+          const arrayField = docSnap.data().routes; // 配列フィールド名
+          //console.log("配列",arrayField);
+          const mappedArray = arrayField.map(item => ({
+            id:item,
+            name: item,
+          }));
+          setRouteNames(mappedArray);
+          //console.log("コース",mappedArray)
+        } else {
+          console.log("ねーよ何も");
+        }
+      } catch (error) {
+        console.error('Error fetching document:', error);
+      }  finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  },[])
+
+  //console.log("loginName",loginName);
+
+  // 設定の状態管理
+  const [customers,setCustomers] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
 
-  const courses = [
-    { id: '1', name: '内科基礎コース' },
-    { id: '2', name: '外科基礎コース' },
-    { id: '3', name: '救急医療コース' },
-    { id: '4', name: '総合診療コース' }
-  ];
-
   const handleSubmit = () => {
-    console.log('保存されたデータ:', { username, selectedCourse });
+    console.log('保存されたデータ:', { selectedCourse });
+    localStorage.setItem('todayRoute', selectedCourse);
+    setTodayRoute(localStorage.getItem('todayRoute'));
   };
 
   const handleLogout = () => {
     console.log('ログアウト処理');
+    localStorage.setItem('userId', "");
+    localStorage.setItem('userType', "");
+    localStorage.setItem('todayRoute', '');
+    localStorage.setItem('isAuthenticated', 'false');
+    window.location.reload();   
   };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="min-h-screen bg-blue-50 p-8">
@@ -48,26 +91,26 @@ const Settings = () => {
 
         <div className="p-6 space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">ユーザー名:</label>
-            <input
-              type="text"
-              value="北シ；福井　カズマ"
-              disabled
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-500"
-            />
+            <label className="text-base font-medium text-gray-700">ユーザー名：</label>
+            <label className="text-base font-medium text-gray-700">{loginName}</label>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">担当コース</label>
+            <label className="text-base font-medium text-gray-700">本日の担当コース：</label>
+            <label className="text-base font-medium text-gray-700">{todayRoute}</label>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-base font-medium text-gray-700">担当コース</label>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">コースを選択</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.name}
+              {routeNames.map((route) => (
+                <option key={route.id} value={route.name}>
+                  {route.id}
                 </option>
               ))}
             </select>
