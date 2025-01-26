@@ -25,104 +25,72 @@ const Settings = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [sound, setSound] = useState(true);
 
-  // 設定セクションの定義
-  const settingSections = [
-    {
-      title: '一般設定',
-      items: [
-        {
-          icon: Moon,
-          label: 'ダークモード',
-          type: 'toggle',
-          value: darkMode,
-          onChange: () => setDarkMode(!darkMode)
-        },
-        {
-          icon: Languages,
-          label: '言語',
-          type: 'link',
-          value: '日本語'
-        }
-      ]
-    },
-    {
-      title: 'その他',
-      items: [
+  const [selectedCourse, setSelectedCourse] = useState('');
 
-        {
-          icon: LogOut,
-          label: 'ログアウト',
-          type: 'button',
-          className: 'text-red-600'
-        }
-      ]
-    }
+  const courses = [
+    { id: '1', name: '内科基礎コース' },
+    { id: '2', name: '外科基礎コース' },
+    { id: '3', name: '救急医療コース' },
+    { id: '4', name: '総合診療コース' }
   ];
 
-  return (
-    <div className="flex-1 flex flex-col bg-sky-50">
+  const handleSubmit = () => {
+    console.log('保存されたデータ:', { username, selectedCourse });
+  };
 
-      {/* 設定リスト */}
-      <div className="flex-1 overflow-y-auto">
-        {settingSections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className="mt-6 mx-4">
-            <h2 className="text-sm font-medium text-gray-600 mb-2 px-2">
-              {section.title}
-            </h2>
-            <div className="bg-white rounded-lg shadow">
-              {section.items.map((item, itemIndex) => {
-                const Icon = item.icon;
-                
-                return (
-                  <div
-                    key={itemIndex}
-                    className={`
-                      flex items-center justify-between p-4
-                      ${itemIndex !== 0 ? 'border-t border-gray-100' : ''}
-                      ${item.type === 'link' ? 'cursor-pointer hover:bg-gray-50' : ''}
-                    `}
-                  >
-                    <div className="flex items-center">
-                      <Icon size={20} className={item.className || 'text-gray-600'} />
-                      <span className={`ml-3 ${item.className || 'text-gray-800'}`}>
-                        {item.label}
-                      </span>
-                    </div>
-                    
-                    {item.type === 'toggle' ? (
-                      <button
-                        onClick={item.onChange}
-                        className={`
-                          relative inline-flex h-6 w-11 items-center rounded-full 
-                          transition-colors focus:outline-none
-                          ${item.value ? 'bg-teal-600' : 'bg-gray-200'}
-                        `}
-                      >
-                        <span 
-                          className={`
-                            inline-block h-4 w-4 rounded-full bg-white transition-transform
-                            ${item.value ? 'translate-x-6' : 'translate-x-1'}
-                          `}
-                        />
-                      </button>
-                    ) : item.type === 'link' ? (
-                      <div className="flex items-center text-gray-400">
-                        {item.value && (
-                          <span className="mr-2 text-sm">{item.value}</span>
-                        )}
-                        <ChevronRight size={20} />
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
+  const handleLogout = () => {
+    console.log('ログアウト処理');
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-50 p-8">
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">ユーザー名:</label>
+            <input
+              type="text"
+              value="北シ；福井　カズマ"
+              disabled
+              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">担当コース</label>
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">コースを選択</option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="pt-4 space-y-4">
+            <button
+              onClick={handleSubmit}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              設定を保存
+            </button>
+            
+            <div className="pt-12 border-t mt-8">
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 border border-red-500 text-red-500 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                ログアウト
+              </button>
             </div>
           </div>
-        ))}
-
-        {/* バージョン情報 */}
-        <div className="mt-6 mb-8 text-center text-gray-500 text-sm">
-          バージョン 0.1.0
         </div>
       </div>
     </div>
