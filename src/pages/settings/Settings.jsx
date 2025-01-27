@@ -1,20 +1,10 @@
 import React, { useState , useEffect } from 'react';
-import { 
-  Bell, 
-  Moon, 
-  Smartphone, 
-  Lock,
-  ChevronRight, 
-  Volume2,
-  Languages,
-  HelpCircle,
-  LogOut
-} from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { LogOut } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
+import { changeUserData } from '../../store/slice/userDataSlice';
 import { db } from '../../firebase';
-import { addDoc, collection, doc, getDoc, serverTimestamp, where } from 'firebase/firestore';
-import ChatRoomCreator  from '../../hooks/useMakeChatRoom'
+import { addDoc, collection, doc, getDoc, query, serverTimestamp, where } from 'firebase/firestore';
 
 const Settings = () => {
 
@@ -24,8 +14,14 @@ const Settings = () => {
     dispatch(changeText('設定'))   
   })
 
+  // store内の値を取得
+  const userId = useSelector(state => state.userData.userId);
+  const userName = useSelector(state => state.userData.userName);
+
   //社員に設定されたコースの検索--------------------------------------------
   const [loginName, setLoginName] = useState("");
+  const [loginId, setLoginId] = useState("");
+  const [loginUserType, setLoginUserType] = useState("");
   const [todayRoute,setTodayRoute] = useState("");
   const [routeNames, setRouteNames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,16 +29,35 @@ const Settings = () => {
   useEffect(() => {
 
     // 初回レンダリング時にローカルストレージをチェック
-    setTodayRoute(localStorage.getItem('todayRoute'));
+    const bufTodayRoute = localStorage.getItem('todayRoute');
+    const bufLoginId = localStorage.getItem('userId')
+    // console.log("todayRoute",bufTodayRoute)
+    // console.log("UserID",bufLoginId)
+    // useStateの変数は関数内で値を設定しても、空白のままのようだ
+    setTodayRoute(bufTodayRoute);
+    setLoginId(bufLoginId);
+    setLoginUserType(localStorage.getItem('userType'));
 
     const fetchData = async () => {
       try {
-        const docRef = doc(db, 'staff', '0002580');
+        let docRef
+        if(bufLoginId.length === 4){
+          docRef = doc(db, 'customer', bufLoginId);
+        }else{
+          docRef = doc(db, 'staff', bufLoginId);
+        }
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          console.log("検索",docSnap.data().name);
-          setLoginName(docSnap.data().name);        
+          //console.log("検索",docSnap.data().name);
+          const bufLoginName = docSnap.data().name
+          setLoginName(bufLoginName);
+          dispatch(changeUserData({userId:bufLoginId,userName:bufLoginName}))   
+
+          //スタッフ以外は下記コース設定は不要なので抜ける
+          if (loginUserType !== 'staff') {
+            return; 
+          }
           const arrayField = docSnap.data().routes; // 配列フィールド名
           //console.log("配列",arrayField);
           const mappedArray = arrayField.map(item => ({
@@ -66,23 +81,26 @@ const Settings = () => {
   //console.log("loginName",loginName);
 
   //　コースマスター取得
-  const getCustomerSchedule = async () => {
+  const getCustomerSchedule = async (documentId) => {
     try {
-      const q = query(
-        collection(db, 'routes'),
-        where('schedule.monday', 'array-contains', {
-          customer_id: 'c62',
-          order: 1,  // orderの値が不明な場合は削除
-          estimated_time: '09:00'  // 時間が不明な場合は削除
-        })
-      );
+      const docRef = doc(db, 'pickup_routes', documentId);
+      const docSnap = await getDoc(docRef);
   
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
-        console.log(doc.id, ' => ', doc.data());
-      });
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log("Doc.Data()やでー",data)
+        const mondaySchedule = data.schedule.monday;
+        mondaySchedule.forEach((schedule, index) => {
+          console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + " " + schedule.order);
+        });
+        return mondaySchedule;
+      } else {
+        console.log('Document not found');
+        return null;
+      }
     } catch (error) {
-      console.error('Error getting documents: ', error);
+      console.error('Error:', error);
+      return null;
     }
   };
 
@@ -115,7 +133,8 @@ const Settings = () => {
     console.log('保存されたデータ:', { selectedCourse });
     localStorage.setItem('todayRoute', selectedCourse);
     setTodayRoute(localStorage.getItem('todayRoute'));
-    createChatRoom();
+    getCustomerSchedule('C62');
+    //createChatRoom();
   };
 
   const handleLogout = () => {
@@ -134,6 +153,10 @@ const Settings = () => {
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
 
         <div className="p-6 space-y-6">
+          <div className="space-y-2">
+            <label className="text-base font-medium text-gray-700">ユーザーID：</label>
+            <label className="text-base font-medium text-gray-700">{loginId}</label>
+          </div>
           <div className="space-y-2">
             <label className="text-base font-medium text-gray-700">ユーザー名：</label>
             <label className="text-base font-medium text-gray-700">{loginName}</label>

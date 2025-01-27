@@ -61,7 +61,7 @@ const CustomerList = () => {
               {/* 施設名とステータス */}
               <div className="flex justify-between items-start mb-2">
                 <h2 className="text-lg font-medium">
-                  {customer.customer_code + ' ' + customer.customer.customer_name}
+                  {customer.customer_code + ' ' + customer.customer.name}
                 </h2>
                 <span 
                   className={`px-2 py-1 rounded-full text-xs ${
