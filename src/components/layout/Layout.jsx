@@ -9,7 +9,7 @@ const Layout = ({ children }) => {
       <div className="w-full md:max-w-2xl lg:max-w-3xl h-screen md:h-[800px] md:my-8 bg-sky-50 
                       flex flex-col md:rounded-lg md:shadow-lg overflow-hidden">
         <Header />
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-y-auto  flex flex-col">
           {children}
         </div>
         <BottomNav />

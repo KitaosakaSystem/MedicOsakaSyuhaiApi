@@ -155,8 +155,10 @@ const Settings = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-blue-50 p-8">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+    // <div className="min-h-screen bg-blue-50 p-8">
+    <div className="flex flex-col h-screen overflow-y-auto  bg-gray-50">
+      {/* <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg "> */}
+      <div className="flex-1 overflow-y-auto p-4">
 
         <div className="p-6 space-y-6">
           <div className="space-y-2">
