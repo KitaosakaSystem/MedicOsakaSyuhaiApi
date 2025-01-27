@@ -1,15 +1,16 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore} from "firebase/firestore"
-import { getAuth,GoogleAuthProvider } from "firebase/auth"
+import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
+console.log("api", import.meta.env.VITE_FIREBASE_API_KEY);
 const firebaseConfig = {
-  apiKey: "AIzaSyBCY6l4AGAroU0jKDReAj3N_BJTsw5KgOo",
-  authDomain: "linechatapp-621b7.firebaseapp.com",
-  projectId: "linechatapp-621b7",
-  storageBucket: "linechatapp-621b7.firebasestorage.app",
-  messagingSenderId: "906763622951",
-  appId: "1:906763622951:web:d272a4b2f5dde3dab3cc02"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
@@ -18,4 +19,4 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-export {auth,db,provider}
+export { auth, db, provider };

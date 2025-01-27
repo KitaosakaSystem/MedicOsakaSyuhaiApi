@@ -13,7 +13,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { db } from '../../firebase';
-import { addDoc, collection, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, where } from 'firebase/firestore';
 import ChatRoomCreator  from '../../hooks/useMakeChatRoom'
 
 const Settings = () => {
@@ -64,6 +64,27 @@ const Settings = () => {
   },[])
 
   //console.log("loginName",loginName);
+
+  //　コースマスター取得
+  const getCustomerSchedule = async () => {
+    try {
+      const q = query(
+        collection(db, 'routes'),
+        where('schedule.monday', 'array-contains', {
+          customer_id: 'c62',
+          order: 1,  // orderの値が不明な場合は削除
+          estimated_time: '09:00'  // 時間が不明な場合は削除
+        })
+      );
+  
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        console.log(doc.id, ' => ', doc.data());
+      });
+    } catch (error) {
+      console.error('Error getting documents: ', error);
+    }
+  };
 
   // チャットルーム作成
   const createChatRoom = async () => {
