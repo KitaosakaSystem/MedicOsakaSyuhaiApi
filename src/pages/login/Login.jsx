@@ -63,7 +63,9 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('userId', userId);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'user');
             localStorage.setItem('todayRoute', '');
+            localStorage.setItem('bottomNaviMerge', '0');
             localStorage.setItem('isAuthenticated', 'true');
+            
             
             // ログイン成功後のリダイレクトなど
             // 例: window.location.href = '/dashboard';

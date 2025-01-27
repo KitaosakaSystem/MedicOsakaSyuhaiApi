@@ -5,6 +5,8 @@ import { changeText } from '../../store/slice/headerTextSlice';
 import { changeUserData } from '../../store/slice/userDataSlice';
 import { db } from '../../firebase';
 import { addDoc, collection, doc, getDoc, query, serverTimestamp, where } from 'firebase/firestore';
+import ToggleSwitch from '../../components/ToggleSwitch';
+
 
 const Settings = () => {
 
@@ -129,6 +131,10 @@ const Settings = () => {
   const [customers,setCustomers] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
 
+  const handleBottomMarginChange = (enabled) => {
+    console.log('ボトムメニューマージン:', enabled ? '有効' : '無効');
+  };
+
   const handleSubmit = () => {
     console.log('保存されたデータ:', { selectedCourse });
     localStorage.setItem('todayRoute', selectedCourse);
@@ -190,6 +196,11 @@ const Settings = () => {
             >
               設定を保存
             </button>
+
+            <ToggleSwitch
+              label="ボトムメニューマージン有効"
+              onChange={handleBottomMarginChange}
+            />
             
             <div className="pt-12 border-t mt-8">
               <button

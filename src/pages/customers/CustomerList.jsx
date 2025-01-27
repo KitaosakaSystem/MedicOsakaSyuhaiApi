@@ -41,9 +41,10 @@ const CustomerList = () => {
   // 顧客選択時のハンドラー
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);
+    console.log("Customer.USerID",customer.customer.userid)
     dispatch(changeUserData({
-      userCode:customer.customer_code,
-      userName:customer.customer.customer_name,
+      userId:customer.customer.userid,
+      userName:customer.customer.name,
     }))
     navigate('/chat');
   };
