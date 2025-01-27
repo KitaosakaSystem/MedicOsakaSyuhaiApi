@@ -38,6 +38,7 @@ const Settings = () => {
     // useStateの変数は関数内で値を設定しても、空白のままのようだ
     setTodayRoute(bufTodayRoute);
     setLoginId(bufLoginId);
+    
     setLoginUserType(localStorage.getItem('userType'));
 
     const fetchData = async () => {
@@ -132,7 +133,7 @@ const Settings = () => {
   const [selectedCourse, setSelectedCourse] = useState('');
 
   const handleBottomMarginChange = (enabled) => {
-    console.log('ボトムメニューマージン:', enabled ? '有効' : '無効');
+    //console.log('ボトムメニューマージン:', enabled ? '有効' : '無効');
   };
 
   const handleSubmit = () => {
@@ -199,10 +200,13 @@ const Settings = () => {
               設定を保存
             </button>
 
-            <ToggleSwitch
-              label="ボトムメニューマージン有効"
-              onChange={handleBottomMarginChange}
-            />
+            <div className="pt-12 border-t mt-8">
+              <ToggleSwitch
+                label="ボトムメニューマージン有効"
+                onChange={handleBottomMarginChange}
+              />
+            </div>
+
             
             <div className="pt-12 border-t mt-8">
               <button

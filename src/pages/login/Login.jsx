@@ -63,7 +63,7 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('userId', userId);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'user');
             localStorage.setItem('todayRoute', '');
-            localStorage.setItem('bottomNaviMerge', '0');
+            localStorage.setItem('bottomNaviMerge', 'false');
             localStorage.setItem('isAuthenticated', 'true');
             
             

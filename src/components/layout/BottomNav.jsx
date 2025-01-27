@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, Route, MessageCircle, Settings, ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -10,6 +10,19 @@ const BottomNav = () => {
   const toggleNav = () => {
     setIsNavVisible(!isNavVisible);
   };
+
+  const [bottomNaviMerge, setBottomNaviMerge] = useState(false);
+ 
+  useEffect(() => {
+    const bufBottomNaviMerge = localStorage.getItem('bottomNaviMerge')
+    console.log("bufBottomNaviMerge",bufBottomNaviMerge)
+    if (bufBottomNaviMerge == 'true'){
+      setBottomNaviMerge(true);
+    }else{
+      setBottomNaviMerge(false);
+    }
+    
+  },[])
 
   const navigationItems = [
     { path: '/', icon: Users, label: '顧客一覧' },
@@ -33,13 +46,13 @@ const BottomNav = () => {
         <span className="text-sm text-teal-700">メニュー</span>
         {isNavVisible ? 
           <ChevronDown size={20} className="text-teal-700" /> : 
-          <ChevronUp size={20} className="text-teal-700  mb-12" />
+          <ChevronUp size={20} className="text-teal-700 mb-12 " />
         }
       </button>
 
       {/* Bottom Navigation */}
       {isNavVisible && (
-        <div className="bg-white border-t border-teal-100 md:rounded-b-lg  mb-8">
+        <div className={`bg-white border-t border-teal-100 md:rounded-b-lg ${bottomNaviMerge ? "mb-8" : ""}`}>
           <div className="grid grid-cols-4 py-2">
             {navigationItems.map(({ path, icon: Icon, label }) => (
               <button 
