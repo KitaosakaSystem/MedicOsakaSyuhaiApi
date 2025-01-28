@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Phone } from 'lucide-react';
 import chatStore from '../../store/chatStore';
 
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { useEffect, useState } from 'react';
@@ -15,23 +15,39 @@ const CustomerList = () => {
   const navigate = useNavigate();
   const setCurrentFacility = chatStore(state => state.setCurrentFacility);
 
+  // store内の値を取得
+  const loginUserId = useSelector(state => state.loginUserData.loginUserId);
+  const loginUserName = useSelector(state => state.loginUserData.loginUserName);
+  const setLoginTodayRoute = useSelector(state => state.loginUserData.loginTodayRoute);
+
+  const [todayRoute, setTodayRoute] = useState('');
+
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => { 
     dispatch(changeText('62コース　顧客一覧'))
+    // console.log("state todayRoute 毎回発火",todayRoute);
+    // console.log("setLoginTodayRoute 毎回発火", setLoginTodayRoute);
   })
+  //毎回発火
 
   const [customers,setCustomers] = useState([]);
   const collectionRef = query(collection(db,"customer"))
   useEffect(() => {
+    console.log("Call onSnapShot")
     onSnapshot(collectionRef,(querySnapshot) => {
       const customerResults = [];
       querySnapshot.docs.forEach((doc) => customerResults.push({
         customer_code: doc.id,
         customer:doc.data(),
       }));
-      setCustomers(customerResults);
+      setCustomers(customerResults);     
     });
+
+    //setTodayRoute(setLoginTodayRoute);
+    console.log("state todayRoute 初回",todayRoute);
+    console.log("setLoginTodayRoute 初回", setLoginTodayRoute);
+
   },[])
 
   // customers.map((doc) =>{

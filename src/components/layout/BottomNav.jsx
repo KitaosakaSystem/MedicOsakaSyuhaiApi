@@ -15,7 +15,7 @@ const BottomNav = () => {
  
   useEffect(() => {
     const bufBottomNaviMerge = localStorage.getItem('bottomNaviMerge')
-    console.log("bufBottomNaviMerge",bufBottomNaviMerge)
+    // console.log("bufBottomNaviMerge",bufBottomNaviMerge)
     if (bufBottomNaviMerge == 'true'){
       setBottomNaviMerge(true);
     }else{
