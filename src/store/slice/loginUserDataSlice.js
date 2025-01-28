@@ -8,6 +8,7 @@ export const loginUserDataSlice = createSlice({
     loginUserId: "",
     loginUserName: "",
     loginTodayRoute:"",
+    isReadColChatRoom:false,
   },
   // 内部のデータにアクセスするための処理(処理名:sayhello)
   reducers: {
@@ -15,6 +16,7 @@ export const loginUserDataSlice = createSlice({
       state.loginUserId = action.payload.userId;
       state.loginUserName = action.payload.userName;
       state.loginTodayRoute = action.payload.todayRoute;
+      state.isReadColChatRoom = action.payload.isReadColChatRoom;
     },
   },
 });

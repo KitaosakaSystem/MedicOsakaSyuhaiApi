@@ -4,6 +4,7 @@ import { changeText } from '../../store/slice/headerTextSlice';
 import { db } from '../../firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate} from 'react-router-dom';
+import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
 const Login = ({ onLoginSuccess }) => {
 
@@ -16,6 +17,7 @@ const Login = ({ onLoginSuccess }) => {
     })
 
     const [userId, setUserId] = useState('');
+    const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
@@ -30,6 +32,8 @@ const Login = ({ onLoginSuccess }) => {
     
         const userDoc = querySnapshot.docs[0];
         const userData = userDoc.data();
+        // console.log(userDoc.data().name)
+        // const bufLoginName = docSnap.data().name;
     
         // パスワードの検証
         // 注: 実際の実装では、パスワードはハッシュ化して保存・比較する必要があります
@@ -66,19 +70,17 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('bottomNaviMerge', 'false');
             localStorage.setItem('isAuthenticated', 'true');
             
+            dispatch(changeLoginUserData({userId:userId,userName:userData.name,todayRoute:'',isReadColChatRoom:false}))   
             
             // ログイン成功後のリダイレクトなど
             // 例: window.location.href = '/dashboard';
             //navigate("/");
             onLoginSuccess();
-            console.log("推移");
-            
+            console.log("推移"); 
           } catch (error) {
             console.error('ログインエラー:', error);
             setError(error.message || 'ログイン処理中にエラーが発生しました');
           }
-
-
     };
 
     return (

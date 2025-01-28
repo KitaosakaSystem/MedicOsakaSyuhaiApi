@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 
 import { db } from '../../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
 const CustomerList = () => {
 
@@ -19,22 +20,26 @@ const CustomerList = () => {
   const loginUserId = useSelector(state => state.loginUserData.loginUserId);
   const loginUserName = useSelector(state => state.loginUserData.loginUserName);
   const setLoginTodayRoute = useSelector(state => state.loginUserData.loginTodayRoute);
-
-  const [todayRoute, setTodayRoute] = useState('');
+  const isReadChatRoom = useSelector(state => state.loginUserData.isReadColChatRoom);
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => { 
     dispatch(changeText('62コース　顧客一覧'))
-    // console.log("state todayRoute 毎回発火",todayRoute);
-    // console.log("setLoginTodayRoute 毎回発火", setLoginTodayRoute);
-  })
-  //毎回発火
+  },[])
 
   const [customers,setCustomers] = useState([]);
   const collectionRef = query(collection(db,"customer"))
+
   useEffect(() => {
-    console.log("Call onSnapShot")
+
+    console.log('isREadColChatRoom', isReadChatRoom);
+
+    if(isReadChatRoom){
+      console.log("Call onSnapShotはコースに変更がないからぬけるよ");
+      return;
+    }
+
     onSnapshot(collectionRef,(querySnapshot) => {
       const customerResults = [];
       querySnapshot.docs.forEach((doc) => customerResults.push({
@@ -44,10 +49,8 @@ const CustomerList = () => {
       setCustomers(customerResults);     
     });
 
-    //setTodayRoute(setLoginTodayRoute);
-    console.log("state todayRoute 初回",todayRoute);
-    console.log("setLoginTodayRoute 初回", setLoginTodayRoute);
-
+    dispatch(changeLoginUserData({userId:loginUserId,userName:loginUserName,todayRoute:setLoginTodayRoute,isReadColChatRoom:true}))
+    console.log('Dispatch成功',isReadChatRoom)
   },[])
 
   // customers.map((doc) =>{

@@ -32,6 +32,7 @@ const Settings = () => {
 
   useEffect(() => {
 
+    console.log('設定画面')
     // 初回レンダリング時にローカルストレージをチェック
     const bufTodayRoute = localStorage.getItem('todayRoute');
     const bufLoginId = localStorage.getItem('userId')
