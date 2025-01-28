@@ -7,6 +7,8 @@ import CourseList from './pages/course/CourseList';
 import Settings from './pages/settings/Settings';
 import Login from './pages/login/Login';
 import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { changeLoginUserData } from './store/slice/loginUserDataSlice';
 
 const ProtectedRoute = ({ isAuthenticated }) => {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
@@ -15,18 +17,26 @@ const ProtectedRoute = ({ isAuthenticated }) => {
 const App = () => {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     // 初回レンダリング時にローカルストレージをチェック
     const auth = localStorage.getItem('isAuthenticated');
     if (auth === 'true') {
-      setIsAuthenticated(true);  
+      setIsAuthenticated(true);
+      const loginUserId = localStorage.getItem('userId');
+      const setLoginTodayRoute =  localStorage.getItem('todayRoute');
+      const userType =  localStorage.getItem('userType');
+
+      console.log("ディスパッチー")
+      dispatch(changeLoginUserData({userId:loginUserId,userName:'',todayRoute:setLoginTodayRoute,isReadColChatRoom:false}))
     }
   }, []);
 
   const handleLogin = () => {
     localStorage.setItem('isAuthenticated', 'true');
     setIsAuthenticated(true);
+    console.log("ro\\ログオーーーーーーーーーーーン");
   };
 
   return (

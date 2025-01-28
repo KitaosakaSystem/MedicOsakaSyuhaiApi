@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { db } from '../../firebase';
-import { addDoc, collection, doc, getDoc, query, serverTimestamp, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
@@ -19,8 +19,8 @@ const Settings = () => {
 
   // store内の値を取得
   // todo:いらんやろし消す
-  // const userId = useSelector(state => state.loginUserData.userId);
-  // const userName = useSelector(state => state.loginUserData.userName);
+  const userId = useSelector(state => state.loginUserData.loginUserId);
+  const userName = useSelector(state => state.loginUserData.loginUserName);
 
   //社員に設定されたコースの検索--------------------------------------------
   const [loginName, setLoginName] = useState("");
@@ -85,8 +85,30 @@ const Settings = () => {
   },[])
 
   //console.log("loginName",loginName);
+   // チャットルーム作成
+   const createChatRoom = async (routeId,schedule) => {
+    try {
+        const chatRoomData = {
+            room_id: userId + '_' + schedule.customer_id,
+            customer_id: schedule.customer_id,
+            customer_name: schedule.name,
+            staff_id: userId,
+            pickup_status: "1",
+            date: new Date().toISOString().split('T')[0],
+            created_at: serverTimestamp(),
+        };
 
-  //　コースマスター取得
+        console.log("chat_Data",chatRoomData);
+        const docRef = doc(db, 'chat_rooms', userId + '_' + schedule.customer_id);
+        await setDoc(docRef, chatRoomData);
+        console.log('チャットルームが作成されました:', docRef.id);
+
+    } catch (error) {
+        console.error('エラーが発生しました:', error);
+    }
+  };
+
+  //　当日割り当てコースマスター取得
   const getCustomerSchedule = async (documentId) => {
     try {
       const docRef = doc(db, 'pickup_routes', documentId);
@@ -97,7 +119,8 @@ const Settings = () => {
         console.log("Doc.Data()やでー",data)
         const mondaySchedule = data.schedule.monday;
         mondaySchedule.forEach((schedule, index) => {
-          console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + " " + schedule.order);
+          console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + schedule.name  + " " + schedule.order);
+          createChatRoom(documentId,schedule)          
         });
         return mondaySchedule;
       } else {
@@ -110,27 +133,6 @@ const Settings = () => {
     }
   };
 
-  // チャットルーム作成
-  const createChatRoom = async () => {
-        try {
-            const chatData = {
-                room_id: "ch789",
-                customer_id: "c111",
-                staff_id: "s789",
-                pickup_status: "1",
-                date: new Date().toISOString().split('T')[0],
-                created_at: serverTimestamp(),
-            };
-
-            console.log("chat_Data",chatData);
-            const docRef = await addDoc(collection(db, 'chat_rooms'), chatData);
-            console.log('チャットルームが作成されました:', docRef.id);
-
-        } catch (error) {
-            console.error('エラーが発生しました:', error);
-        }
-  };
-
   // 設定の状態管理---------------------------------------------------------------------
   const [customers,setCustomers] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
@@ -140,6 +142,10 @@ const Settings = () => {
   };
 
   const handleSubmit = () => {
+    if (!selectedCourse){
+      console.log('なんもえらんでへんさかいな');
+      return;
+    }
     console.log('保存されたデータ:', { selectedCourse });
     localStorage.setItem('todayRoute', selectedCourse);
     setTodayRoute(localStorage.getItem('todayRoute'));

@@ -8,7 +8,7 @@ import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { useEffect, useState } from 'react';
 
 import { db } from '../../firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
 const CustomerList = () => {
@@ -29,26 +29,52 @@ const CustomerList = () => {
   },[])
 
   const [customers,setCustomers] = useState([]);
-  const collectionRef = query(collection(db,"customer"))
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
 
+    // if(isReadChatRoom){
+    //   console.log("Call onSnapShotはコースに変更がないからぬけるよ");
+    //   return;
+    // }
+    const fetchDocuments = async () => {
+      console.log("loginUser",loginUserId);
+      try {
+        // コレクションの参照を作成
+        const collectionRef = collection(db, "chat_rooms");
+        // クエリを作成
+        const q = query(collectionRef,where("staff_id", "==", loginUserId));
+        // クエリを実行
+        const querySnapshot = await getDocs(q);
+        
+        // 結果を配列に変換
+        const customerResults = [];
+        const docs = querySnapshot.docs.map(doc =>  customerResults.push({
+          customer_code: doc.id,
+          customer:doc.data(),
+        }));
+
+        setCustomers(customerResults);
+        console.log('データベースキターーーーーーーー');   
+        setLoading(false);
+      } catch (err) {
+        console.log(err)
+        setLoading(false);
+      }
+    };
+    fetchDocuments();
+
+    // onSnapshot(collectionRef,(querySnapshot) => {
+    //   const customerResults = [];
+    //   querySnapshot.docs.forEach((doc) => customerResults.push({
+    //     customer_code: doc.id,
+    //     customer:doc.data(),
+    //   }));
+    //   setCustomers(customerResults);
+    //   console.log('データベースキターーーーーーーー');     
+    // });
+
     console.log('isREadColChatRoom', isReadChatRoom);
-
-    if(isReadChatRoom){
-      console.log("Call onSnapShotはコースに変更がないからぬけるよ");
-      return;
-    }
-
-    onSnapshot(collectionRef,(querySnapshot) => {
-      const customerResults = [];
-      querySnapshot.docs.forEach((doc) => customerResults.push({
-        customer_code: doc.id,
-        customer:doc.data(),
-      }));
-      setCustomers(customerResults);     
-    });
-
     dispatch(changeLoginUserData({userId:loginUserId,userName:loginUserName,todayRoute:setLoginTodayRoute,isReadColChatRoom:true}))
     console.log('Dispatch成功',isReadChatRoom)
   },[])
@@ -81,7 +107,7 @@ const CustomerList = () => {
               {/* 施設名とステータス */}
               <div className="flex justify-between items-start mb-2">
                 <h2 className="text-lg font-medium">
-                  {customer.customer_code + ' ' + customer.customer.name}
+                  {customer.customer.customer_id + ' ' + customer.customer.customer_name}
                 </h2>
                 <span 
                   className={`px-2 py-1 rounded-full text-xs ${
