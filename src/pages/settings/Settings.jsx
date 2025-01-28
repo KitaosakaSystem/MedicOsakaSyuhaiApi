@@ -6,6 +6,7 @@ import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { db } from '../../firebase';
 import { addDoc, collection, doc, getDoc, query, serverTimestamp, where } from 'firebase/firestore';
 import ToggleSwitch from '../../components/ToggleSwitch';
+import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
 
 const Settings = () => {
@@ -17,8 +18,9 @@ const Settings = () => {
   })
 
   // store内の値を取得
-  const userId = useSelector(state => state.userData.userId);
-  const userName = useSelector(state => state.userData.userName);
+  // todo:いらんやろし消す
+  // const userId = useSelector(state => state.loginUserData.userId);
+  // const userName = useSelector(state => state.loginUserData.userName);
 
   //社員に設定されたコースの検索--------------------------------------------
   const [loginName, setLoginName] = useState("");
@@ -55,7 +57,7 @@ const Settings = () => {
           //console.log("検索",docSnap.data().name);
           const bufLoginName = docSnap.data().name
           setLoginName(bufLoginName);
-          dispatch(changeChatUserData({userId:bufLoginId,userName:bufLoginName}))   
+          dispatch(changeLoginUserData({userId:bufLoginId,userName:bufLoginName,todayRoute:bufTodayRoute}))   
 
           //スタッフ以外は下記コース設定は不要なので抜ける
           if (bufUserType !== 'staff') {
@@ -140,6 +142,7 @@ const Settings = () => {
     console.log('保存されたデータ:', { selectedCourse });
     localStorage.setItem('todayRoute', selectedCourse);
     setTodayRoute(localStorage.getItem('todayRoute'));
+    dispatch(changeLoginUserData({userId:loginId,userName:loginName,todayRoute:todayRoute}))   
     getCustomerSchedule('C62');
     //createChatRoom();
   };
