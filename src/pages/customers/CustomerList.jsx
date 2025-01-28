@@ -4,7 +4,7 @@ import chatStore from '../../store/chatStore';
 
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
-import { changeUserData } from '../../store/slice/userDataSlice';
+import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { useEffect, useState } from 'react';
 
 import { db } from '../../firebase';
@@ -42,7 +42,7 @@ const CustomerList = () => {
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);
     console.log("Customer.USerID",customer.customer.userid)
-    dispatch(changeUserData({
+    dispatch(changeChatUserData({
       userId:customer.customer.userid,
       userName:customer.customer.name,
     }))

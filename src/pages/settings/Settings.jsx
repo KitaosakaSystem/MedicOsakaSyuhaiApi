@@ -2,7 +2,7 @@ import React, { useState , useEffect } from 'react';
 import { LogOut } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
-import { changeUserData } from '../../store/slice/userDataSlice';
+import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { db } from '../../firebase';
 import { addDoc, collection, doc, getDoc, query, serverTimestamp, where } from 'firebase/firestore';
 import ToggleSwitch from '../../components/ToggleSwitch';
@@ -55,7 +55,7 @@ const Settings = () => {
           //console.log("検索",docSnap.data().name);
           const bufLoginName = docSnap.data().name
           setLoginName(bufLoginName);
-          dispatch(changeUserData({userId:bufLoginId,userName:bufLoginName}))   
+          dispatch(changeChatUserData({userId:bufLoginId,userName:bufLoginName}))   
 
           //スタッフ以外は下記コース設定は不要なので抜ける
           if (bufUserType !== 'staff') {

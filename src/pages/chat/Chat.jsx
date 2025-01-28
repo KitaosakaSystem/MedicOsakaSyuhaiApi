@@ -9,8 +9,8 @@ import { useSelector } from 'react-redux';
 
 const Chat = () => {
 
-  const userCode =  useSelector(state => state.userData.userId);
-  const userName =  useSelector(state => state.userData.userName);
+  const userCode =  useSelector(state => state.chatUserData.chatUserId);
+  const userName =  useSelector(state => state.chatUserData.chatUserName);
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
