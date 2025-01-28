@@ -33,13 +33,13 @@ const Settings = () => {
     // 初回レンダリング時にローカルストレージをチェック
     const bufTodayRoute = localStorage.getItem('todayRoute');
     const bufLoginId = localStorage.getItem('userId')
+    const bufUserType = localStorage.getItem('userType')
     // console.log("todayRoute",bufTodayRoute)
     // console.log("UserID",bufLoginId)
     // useStateの変数は関数内で値を設定しても、空白のままのようだ
     setTodayRoute(bufTodayRoute);
     setLoginId(bufLoginId);
-    
-    setLoginUserType(localStorage.getItem('userType'));
+    setLoginUserType(bufUserType);
 
     const fetchData = async () => {
       try {
@@ -58,7 +58,7 @@ const Settings = () => {
           dispatch(changeUserData({userId:bufLoginId,userName:bufLoginName}))   
 
           //スタッフ以外は下記コース設定は不要なので抜ける
-          if (loginUserType !== 'staff') {
+          if (bufUserType !== 'staff') {
             return; 
           }
           const arrayField = docSnap.data().routes; // 配列フィールド名

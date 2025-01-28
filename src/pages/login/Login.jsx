@@ -61,7 +61,7 @@ const Login = ({ onLoginSuccess }) => {
       
             // ログイン成功時の処理
             localStorage.setItem('userId', userId);
-            localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'user');
+            localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'staff');
             localStorage.setItem('todayRoute', '');
             localStorage.setItem('bottomNaviMerge', 'false');
             localStorage.setItem('isAuthenticated', 'true');
