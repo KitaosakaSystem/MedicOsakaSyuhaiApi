@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
+import { addChatRoomData } from '../../store/slice/chatRoomDataSlice';
 
 const CustomerList = () => {
 
@@ -22,6 +23,8 @@ const CustomerList = () => {
   const setLoginTodayRoute = useSelector(state => state.loginUserData.loginTodayRoute);
   const isReadChatRoom = useSelector(state => state.loginUserData.isReadColChatRoom);
 
+  const chatRoomData = useSelector(state => state.chatRoomData);
+
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => { 
@@ -33,12 +36,15 @@ const CustomerList = () => {
 
   useEffect(() => {
 
-    // if(isReadChatRoom){
-    //   console.log("Call onSnapShotはコースに変更がないからぬけるよ");
-    //   return;
-    // }
+    console.log("isReadChatRoom",isReadChatRoom);
+    if(isReadChatRoom){
+      console.log(chatRoomData);
+      console.log("Call onSnapShotはコースに変更がないからぬけるよ");
+      return;
+    }
+
     const fetchDocuments = async () => {
-      console.log("loginUser",loginUserId);
+      //console.log("loginUser",loginUserId);
       try {
         // コレクションの参照を作成
         const collectionRef = collection(db, "chat_rooms");
@@ -46,15 +52,18 @@ const CustomerList = () => {
         const q = query(collectionRef,where("staff_id", "==", loginUserId));
         // クエリを実行
         const querySnapshot = await getDocs(q);
-        
         // 結果を配列に変換
         const customerResults = [];
-        const docs = querySnapshot.docs.map(doc =>  customerResults.push({
-          customer_code: doc.id,
-          customer:doc.data(),
-        }));
-
+        const docs = querySnapshot.docs.map(
+          doc =>  customerResults.push({customer_code: doc.id,customer:doc.data(),})
+        );
         setCustomers(customerResults);
+
+        //ストアに保管しておく
+        querySnapshot.docs.map( 
+          doc => dispatch(addChatRoomData(doc.data()))
+        );
+        
         console.log('データベースキターーーーーーーー');   
         setLoading(false);
       } catch (err) {
@@ -63,16 +72,6 @@ const CustomerList = () => {
       }
     };
     fetchDocuments();
-
-    // onSnapshot(collectionRef,(querySnapshot) => {
-    //   const customerResults = [];
-    //   querySnapshot.docs.forEach((doc) => customerResults.push({
-    //     customer_code: doc.id,
-    //     customer:doc.data(),
-    //   }));
-    //   setCustomers(customerResults);
-    //   console.log('データベースキターーーーーーーー');     
-    // });
 
     console.log('isREadColChatRoom', isReadChatRoom);
     dispatch(changeLoginUserData({userId:loginUserId,userName:loginUserName,todayRoute:setLoginTodayRoute,isReadColChatRoom:true}))
