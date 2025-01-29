@@ -9,14 +9,14 @@ import { useSelector } from 'react-redux';
 
 const Chat = () => {
 
-  const userCode =  useSelector(state => state.chatUserData.chatUserId);
-  const userName =  useSelector(state => state.chatUserData.chatUserName);
+  const chatCustomerId =  useSelector(state => state.chatUserData.chatCustomerId);
+  const chatCustomerName =  useSelector(state => state.chatUserData.chatCustomerName);
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => {
-    console.log("Chat userCode",userCode)
-    dispatch(changeText('(' + userCode + ')' + userName))
+    console.log("Chat CustomerId",chatCustomerId)
+    dispatch(changeText('(' + chatCustomerId + ')' + chatCustomerName))
   })
 
   const [messages, setMessages] = useState([
@@ -70,7 +70,7 @@ const Chat = () => {
               ))}
       </div>
 
-      {userCode &&(
+      {chatCustomerId &&(
         <div className="bg-white border-t p-4">
           <ActionButtons 
             selectedAction={selectedAction}

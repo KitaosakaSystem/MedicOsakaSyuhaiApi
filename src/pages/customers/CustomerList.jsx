@@ -51,8 +51,10 @@ const CustomerList = () => {
     setCurrentFacility(customer);
     console.log("Customer.USerID",customer.customer.userid)
     dispatch(changeChatUserData({
-      userId:customer.customer.userid,
-      userName:customer.customer.name,
+      customerId:customer.customer.customer_id,
+      customerName:customer.customer.customer_name,
+      staffId:loginUserId,
+      staffName:loginUserName
     }))
     navigate('/chat');
   };

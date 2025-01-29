@@ -5,14 +5,18 @@ export const chatUserDataSlice = createSlice({
   name: "chatUserData",
   // 内部で保持するデータ(キー:mess, 初期値:メッセージ)
   initialState: {
-    chatUserId: "",
-    chatUserName: "",
+    chatStaffId: "",
+    chatStaffName: "",
+    chatCustomerId:'',
+    chatCustomerName:'',
   },
   // 内部のデータにアクセスするための処理(処理名:sayhello)
   reducers: {
     changeChatUserData: (state, action) => {
-      state.chatUserId = action.payload.userId;
-      state.chatUserName = action.payload.userName;
+      state.chatCustomerId = action.payload.customerId;
+      state.chatCustomerName = action.payload.customerName;
+      state.chatStaffId = action.payload.staffId;
+      state.chatStaffName = action.payload.staffName;
     },
   },
 });
