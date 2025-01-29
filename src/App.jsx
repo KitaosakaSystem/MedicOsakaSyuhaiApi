@@ -9,6 +9,8 @@ import Login from './pages/login/Login';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { changeLoginUserData } from './store/slice/loginUserDataSlice';
+import { getTodayDate } from './utils/dateUtils';
+
 
 const ProtectedRoute = ({ isAuthenticated }) => {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
@@ -27,7 +29,25 @@ const App = () => {
       const loginUserId = localStorage.getItem('userId');
       const setLoginTodayRoute =  localStorage.getItem('todayRoute');
       const userType =  localStorage.getItem('userType');
+      
+      //本日の担当コース処理
+      const data = localStorage.getItem('todayRoute');
+      if (data) {
+        const todayRoute = JSON.parse(data);
+        const todayDate = getTodayDate();
 
+        console.log("today>",todayDate)
+
+        if (todayRoute.date !== todayDate ){
+          localStorage.removeItem('todayRoute');
+          localStorage.removeItem('chatRooms'); //昨日のチャットルームなので消しておく
+          console.log('日付が異なるため、データを削除しました');
+        }
+        
+        // console.log(todayRoute);
+        // console.log("todayRoute.date",todayRoute.date);
+        // console.log("todayRoute.todayRoute",todayRoute.todayRoute)
+      }
       console.log("ディスパッチー")
       dispatch(changeLoginUserData({userId:loginUserId,userName:'',todayRoute:setLoginTodayRoute,isReadColChatRoom:false}))
     }

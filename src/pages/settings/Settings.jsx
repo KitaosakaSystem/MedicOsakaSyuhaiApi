@@ -7,6 +7,7 @@ import { db } from '../../firebase';
 import { addDoc, collection, doc, getDoc, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
+import { getTodayDate } from '../../utils/dateUtils'
 
 
 const Settings = () => {
@@ -29,6 +30,8 @@ const Settings = () => {
   const [todayRoute,setTodayRoute] = useState("");
   const [routeNames, setRouteNames] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [chatRooms, setChatRooms] = useState([]);
 
   useEffect(() => {
 
@@ -84,9 +87,10 @@ const Settings = () => {
     fetchData();
   },[])
 
+
   //console.log("loginName",loginName);
    // チャットルーム作成
-   const createChatRoom = async (routeId,schedule) => {
+   const createChatRoom = async (routeId,schedule,chatRooms) => {
     try {
         const chatRoomData = {
             room_id: userId + '_' + schedule.customer_id,
@@ -98,10 +102,11 @@ const Settings = () => {
             created_at: serverTimestamp(),
         };
 
-        console.log("chat_Data",chatRoomData);
-        const docRef = doc(db, 'chat_rooms', userId + '_' + schedule.customer_id);
-        await setDoc(docRef, chatRoomData);
-        console.log('チャットルームが作成されました:', docRef.id);
+        chatRooms.push(chatRoomData) //ローカルストレージ保管用に足していく
+        // console.log("chat_Data",chatRoomData);
+        // const docRef = doc(db, 'chat_rooms', userId + '_' + schedule.customer_id);
+        // await setDoc(docRef, chatRoomData);
+        //console.log('チャットルームが作成されました:', docRef.id);
 
     } catch (error) {
         console.error('エラーが発生しました:', error);
@@ -118,10 +123,15 @@ const Settings = () => {
         const data = docSnap.data();
         console.log("Doc.Data()やでー",data)
         const mondaySchedule = data.schedule.monday;
+        const chatRooms = [];
         mondaySchedule.forEach((schedule, index) => {
           console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + schedule.name  + " " + schedule.order);
-          createChatRoom(documentId,schedule)          
+          createChatRoom(documentId,schedule,chatRooms)          
         });
+
+        //ローカルストレージに保管しておく
+        console.log("ChaaaaatRoooooooooooms",chatRooms);
+        localStorage.setItem('chatRooms', JSON.stringify(chatRooms));
         return mondaySchedule;
       } else {
         console.log('Document not found');
@@ -149,7 +159,16 @@ const Settings = () => {
     console.log('保存されたデータ:', { selectedCourse });
     localStorage.setItem('todayRoute', selectedCourse);
     setTodayRoute(localStorage.getItem('todayRoute'));
-    dispatch(changeLoginUserData({userId:loginId,userName:loginName,todayRoute:todayRoute}))   
+    dispatch(changeLoginUserData({userId:loginId,userName:loginName,todayRoute:todayRoute}))
+    
+    const newData = {
+      date: getTodayDate(), // YYYY-MM-DD形式
+      todayRoute: selectedCourse
+    };
+    localStorage.setItem('todayRoute', JSON.stringify(newData));
+
+    console.log('newData',newData);
+
     getCustomerSchedule('C62');
     //createChatRoom();
   };

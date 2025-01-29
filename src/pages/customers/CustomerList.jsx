@@ -10,7 +10,6 @@ import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
 import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
-import { addChatRoomData } from '../../store/slice/chatRoomDataSlice';
 
 const CustomerList = () => {
 
@@ -23,8 +22,6 @@ const CustomerList = () => {
   const setLoginTodayRoute = useSelector(state => state.loginUserData.loginTodayRoute);
   const isReadChatRoom = useSelector(state => state.loginUserData.isReadColChatRoom);
 
-  const chatRoomData = useSelector(state => state.chatRoomData);
-
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => { 
@@ -32,50 +29,21 @@ const CustomerList = () => {
   },[])
 
   const [customers,setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const storedRooms = localStorage.getItem('chatRooms');
 
   useEffect(() => {
-
-    console.log("isReadChatRoom",isReadChatRoom);
-    if(isReadChatRoom){
-      console.log(chatRoomData);
-      console.log("Call onSnapShotはコースに変更がないからぬけるよ");
-      return;
+    if(storedRooms){
+      const customerResults = [];
+      const parsedRooms = JSON.parse(storedRooms);
+      parsedRooms.map((room, index) => {
+        // console.log(`Room ${index + 1}:`, {room_id: room.room_id,customer_name: room.customer_name,customer_id: room.customer_id,
+        //             staff_id: room.staff_id,date: room.date,pickup_status: room.pickup_status});
+        customerResults.push({customer_code: room.room_id,customer:parsedRooms[index],})
+      });
+      // console.log('=======================');
+      // console.log(customerResults)
+      setCustomers(customerResults);
     }
-
-    const fetchDocuments = async () => {
-      //console.log("loginUser",loginUserId);
-      try {
-        // コレクションの参照を作成
-        const collectionRef = collection(db, "chat_rooms");
-        // クエリを作成
-        const q = query(collectionRef,where("staff_id", "==", loginUserId));
-        // クエリを実行
-        const querySnapshot = await getDocs(q);
-        // 結果を配列に変換
-        const customerResults = [];
-        const docs = querySnapshot.docs.map(
-          doc =>  customerResults.push({customer_code: doc.id,customer:doc.data(),})
-        );
-        setCustomers(customerResults);
-
-        //ストアに保管しておく
-        querySnapshot.docs.map( 
-          doc => dispatch(addChatRoomData(doc.data()))
-        );
-        
-        console.log('データベースキターーーーーーーー');   
-        setLoading(false);
-      } catch (err) {
-        console.log(err)
-        setLoading(false);
-      }
-    };
-    fetchDocuments();
-
-    console.log('isREadColChatRoom', isReadChatRoom);
-    dispatch(changeLoginUserData({userId:loginUserId,userName:loginUserName,todayRoute:setLoginTodayRoute,isReadColChatRoom:true}))
-    console.log('Dispatch成功',isReadChatRoom)
   },[])
 
   // customers.map((doc) =>{
