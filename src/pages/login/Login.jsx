@@ -50,6 +50,7 @@ const Login = ({ onLoginSuccess }) => {
          // Firestoreからユーザーを検索
          try {
             let userData;
+            let userType;
             
             // ユーザーIDの桁数に応じてテーブルを切り替え
             if (userId.length === 4) {
@@ -65,12 +66,19 @@ const Login = ({ onLoginSuccess }) => {
       
             // ログイン成功時の処理
             localStorage.setItem('userId', userId);
+            localStorage.setItem('userName', userData.name);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'staff');
             localStorage.setItem('todayRoute', '');
+            localStorage.setItem('selectRouteIds', '');
+            localStorage.setItem('chatRooms', '');
             localStorage.setItem('bottomNaviMerge', 'false');
             localStorage.setItem('isAuthenticated', 'true');
             
-            dispatch(changeLoginUserData({userId:userId,userName:userData.name,todayRoute:'',isReadColChatRoom:false}))   
+            dispatch(changeLoginUserData({userId:userId,
+                                          userName:userData.name, 
+                                          userType:userId.length === 4 ? 'customer' : 'staff',
+                                          todayRouteId:''
+                                        }));   
             
             // ログイン成功後のリダイレクトなど
             // 例: window.location.href = '/dashboard';

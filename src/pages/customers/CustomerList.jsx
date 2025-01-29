@@ -46,10 +46,6 @@ const CustomerList = () => {
     }
   },[])
 
-  // customers.map((doc) =>{
-  //   console.log("顧客コード:" + doc.customer_code + " 顧客名:" + doc.customer.customer_name);
-  // })
-
   // 顧客選択時のハンドラー
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);

@@ -22,41 +22,41 @@ const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // 初回レンダリング時にローカルストレージをチェック
+    // 初回レンダリング時にローカルストレージをチェックして、全ページで使うログインユーザーストアを更新しておく
     const auth = localStorage.getItem('isAuthenticated');
     if (auth === 'true') {
       setIsAuthenticated(true);
       const loginUserId = localStorage.getItem('userId');
-      const setLoginTodayRoute =  localStorage.getItem('todayRoute');
-      const userType =  localStorage.getItem('userType');
+      const loginUserName = localStorage.getItem('userName');
+      const loginUserType =  localStorage.getItem('userType');
       
-      //本日の担当コース処理
+      //本日の担当コース処理---------------------------------------
+      let todayRouteId = ''
       const data = localStorage.getItem('todayRoute');
       if (data) {
         const todayRoute = JSON.parse(data);
         const todayDate = getTodayDate();
-
-        console.log("today>",todayDate)
+        todayRouteId = todayRoute.todayRoute
 
         if (todayRoute.date !== todayDate ){
           localStorage.removeItem('todayRoute');
           localStorage.removeItem('chatRooms'); //昨日のチャットルームなので消しておく
+          todayRouteId = ''
           console.log('日付が異なるため、データを削除しました');
         }
-        
-        // console.log(todayRoute);
         // console.log("todayRoute.date",todayRoute.date);
         // console.log("todayRoute.todayRoute",todayRoute.todayRoute)
       }
-      console.log("ディスパッチー")
-      dispatch(changeLoginUserData({userId:loginUserId,userName:'',todayRoute:setLoginTodayRoute,isReadColChatRoom:false}))
+      dispatch(changeLoginUserData({userId:loginUserId,
+                                    userName:loginUserName,
+                                    userType:loginUserType,
+                                    todayRouteId:todayRouteId}))
     }
   }, []);
 
   const handleLogin = () => {
     localStorage.setItem('isAuthenticated', 'true');
     setIsAuthenticated(true);
-    console.log("ro\\ログオーーーーーーーーーーーン");
   };
 
   return (

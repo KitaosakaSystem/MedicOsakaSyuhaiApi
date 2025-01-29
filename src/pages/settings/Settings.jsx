@@ -20,13 +20,12 @@ const Settings = () => {
 
   // store内の値を取得
   // todo:いらんやろし消す
-  const userId = useSelector(state => state.loginUserData.loginUserId);
-  const userName = useSelector(state => state.loginUserData.loginUserName);
-
+  const loginUserId = useSelector(state => state.loginUserData.loginUserId);
+  const loginUserName = useSelector(state => state.loginUserData.loginUserName);
+  const loginUserType = useSelector(state => state.loginUserData.loginUserType);
+  const loginTodayRouteId = useSelector(state => state.loginUserData.loginTodayRouteId);
+ 
   //社員に設定されたコースの検索--------------------------------------------
-  const [loginName, setLoginName] = useState("");
-  const [loginId, setLoginId] = useState("");
-  const [loginUserType, setLoginUserType] = useState("");
   const [todayRoute,setTodayRoute] = useState("");
   const [routeNames, setRouteNames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,38 +34,34 @@ const Settings = () => {
 
   useEffect(() => {
 
-    console.log('設定画面')
-    // 初回レンダリング時にローカルストレージをチェック
-    const bufTodayRoute = localStorage.getItem('todayRoute');
-    const bufLoginId = localStorage.getItem('userId')
-    const bufUserType = localStorage.getItem('userType')
-    // console.log("todayRoute",bufTodayRoute)
-    // console.log("UserID",bufLoginId)
-    // useStateの変数は関数内で値を設定しても、空白のままのようだ
-    setTodayRoute(bufTodayRoute);
-    setLoginId(bufLoginId);
-    setLoginUserType(bufUserType);
+    //社員の定型ルートIdセットを読み込む----------------------------
+    const data = localStorage.getItem('selectRouteIds');
+    if (data) {
+      const selectRouteIds = JSON.parse(data);
+      // console.log(selectRouteIds);
+      const mappedArray = selectRouteIds.map(item => ({
+        id:item.id,
+        name: item.name,
+      }));
+      setRouteNames(mappedArray);
+      console.log("ローカルから読んだので、FireStoreから読み込む必要ないので（節約!!!)")
+      setLoading(false);
+      return; //ローカルから読んだので、FireStoreから読み込む必要ないので（節約!!!)
+    }
 
     const fetchData = async () => {
       try {
         let docRef
-        if(bufLoginId.length === 4){
-          docRef = doc(db, 'customer', bufLoginId);
+        if(loginUserId.length === 4){
+          //docRef = doc(db, 'customer', loginUserId);
+          return; //スタッフ以外は下記コース設定は不要なので抜ける
         }else{
-          docRef = doc(db, 'staff', bufLoginId);
+          docRef = doc(db, 'staff', loginUserId);
         }
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          //console.log("検索",docSnap.data().name);
-          const bufLoginName = docSnap.data().name
-          setLoginName(bufLoginName);
-          dispatch(changeLoginUserData({userId:bufLoginId,userName:bufLoginName,todayRoute:bufTodayRoute}))   
 
-          //スタッフ以外は下記コース設定は不要なので抜ける
-          if (bufUserType !== 'staff') {
-            return; 
-          }
           const arrayField = docSnap.data().routes; // 配列フィールド名
           //console.log("配列",arrayField);
           const mappedArray = arrayField.map(item => ({
@@ -74,6 +69,7 @@ const Settings = () => {
             name: item,
           }));
           setRouteNames(mappedArray);
+          localStorage.setItem('selectRouteIds', JSON.stringify(mappedArray));
           //console.log("コース",mappedArray)
         } else {
           console.log("ねーよ何も");
@@ -93,10 +89,10 @@ const Settings = () => {
    const createChatRoom = async (routeId,schedule,chatRooms) => {
     try {
         const chatRoomData = {
-            room_id: userId + '_' + schedule.customer_id,
+            room_id: loginUserId + '_' + schedule.customer_id,
             customer_id: schedule.customer_id,
             customer_name: schedule.name,
-            staff_id: userId,
+            staff_id: loginUserId,
             pickup_status: "1",
             date: new Date().toISOString().split('T')[0],
             created_at: serverTimestamp(),
@@ -121,7 +117,7 @@ const Settings = () => {
   
       if (docSnap.exists()) {
         const data = docSnap.data();
-        console.log("Doc.Data()やでー",data)
+        // console.log("Doc.Data()やでー",data)
         const mondaySchedule = data.schedule.monday;
         const chatRooms = [];
         mondaySchedule.forEach((schedule, index) => {
@@ -130,7 +126,7 @@ const Settings = () => {
         });
 
         //ローカルストレージに保管しておく
-        console.log("ChaaaaatRoooooooooooms",chatRooms);
+        // console.log("ChaaaaatRoooooooooooms",chatRooms);
         localStorage.setItem('chatRooms', JSON.stringify(chatRooms));
         return mondaySchedule;
       } else {
@@ -153,31 +149,38 @@ const Settings = () => {
 
   const handleSubmit = () => {
     if (!selectedCourse){
-      console.log('なんもえらんでへんさかいな');
+      console.log('なんも選んでへんさかいな、それはあかんわ');
       return;
     }
-    console.log('保存されたデータ:', { selectedCourse });
-    localStorage.setItem('todayRoute', selectedCourse);
-    setTodayRoute(localStorage.getItem('todayRoute'));
-    dispatch(changeLoginUserData({userId:loginId,userName:loginName,todayRoute:todayRoute}))
-    
+
+    if (selectedCourse === loginTodayRouteId){
+      console.log('同じ選んでるさかいな、あかんで');
+      return;
+    }
+   
     const newData = {
       date: getTodayDate(), // YYYY-MM-DD形式
       todayRoute: selectedCourse
     };
     localStorage.setItem('todayRoute', JSON.stringify(newData));
 
-    console.log('newData',newData);
+    dispatch(changeLoginUserData({userId:loginUserId,
+      userName:loginUserName,
+      userType:loginUserType,
+      todayRouteId:selectedCourse}))
 
-    getCustomerSchedule('C62');
-    //createChatRoom();
+    //曜日ごとのコース一覧を読んでチャットルーム立てる
+    getCustomerSchedule(selectedCourse);
   };
 
   const handleLogout = () => {
     console.log('ログアウト処理');
     localStorage.setItem('userId', "");
+    localStorage.setItem('userName', "");
     localStorage.setItem('userType', "");
     localStorage.setItem('todayRoute', '');
+    localStorage.setItem('chatRooms', '');
+    localStorage.setITem('selectRouteIds','')
     localStorage.setItem('isAuthenticated', 'false');
     window.location.reload();   
   };
@@ -193,16 +196,16 @@ const Settings = () => {
         <div className="p-6 space-y-6">
           <div className="space-y-2">
             <label className="text-base font-medium text-gray-700">ユーザーID：</label>
-            <label className="text-base font-medium text-gray-700">{loginId}</label>
+            <label className="text-base font-medium text-gray-700">{loginUserId}</label>
           </div>
           <div className="space-y-2">
             <label className="text-base font-medium text-gray-700">ユーザー名：</label>
-            <label className="text-base font-medium text-gray-700">{loginName}</label>
+            <label className="text-base font-medium text-gray-700">{loginUserName}</label>
           </div>
 
           <div className="space-y-2">
             <label className="text-base font-medium text-gray-700">本日の担当コース：</label>
-            <label className="text-base font-medium text-gray-700">{todayRoute}</label>
+            <label className="text-base font-medium text-gray-700">{loginTodayRouteId}</label>
           </div>
 
           <div className="space-y-2">
