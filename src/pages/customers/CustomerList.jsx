@@ -19,13 +19,13 @@ const CustomerList = () => {
   // store内の値を取得
   const loginUserId = useSelector(state => state.loginUserData.loginUserId);
   const loginUserName = useSelector(state => state.loginUserData.loginUserName);
-  const setLoginTodayRoute = useSelector(state => state.loginUserData.loginTodayRoute);
-  const isReadChatRoom = useSelector(state => state.loginUserData.isReadColChatRoom);
+  const loginUserType = useSelector(state => state.loginUserData.loginUserType);
+  const loginTodayRouteId = useSelector(state => state.loginUserData.loginTodayRouteId);
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => { 
-    dispatch(changeText('62コース　顧客一覧'))
+    dispatch(changeText( loginTodayRouteId + 'コース　顧客一覧'))
   },[])
 
   const [customers,setCustomers] = useState([]);
@@ -60,6 +60,11 @@ const CustomerList = () => {
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
       <div className="p-4 space-y-4">
+      {!loginTodayRouteId && loginUserType === 'staff' && (
+          <p className="text-amber-800 text-xl">
+            今日の担当コースを選択してください
+          </p>
+      )}
         {customers.map(customer => (
           <div 
             key={customer.customer_code}
