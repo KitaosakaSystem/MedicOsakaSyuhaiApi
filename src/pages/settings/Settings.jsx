@@ -180,7 +180,7 @@ const Settings = () => {
     localStorage.setItem('userType', "");
     localStorage.setItem('todayRoute', '');
     localStorage.setItem('chatRooms', '');
-    localStorage.setITem('selectRouteIds','')
+    localStorage.setItem('selectRouteIds','')
     localStorage.setItem('isAuthenticated', 'false');
     window.location.reload();   
   };
