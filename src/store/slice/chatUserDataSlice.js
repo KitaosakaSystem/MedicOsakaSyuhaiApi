@@ -9,6 +9,7 @@ export const chatUserDataSlice = createSlice({
     chatStaffName: "",
     chatCustomerId:'',
     chatCustomerName:'',
+    chatRoomId:'',
   },
   // 内部のデータにアクセスするための処理(処理名:sayhello)
   reducers: {
@@ -17,6 +18,7 @@ export const chatUserDataSlice = createSlice({
       state.chatCustomerName = action.payload.customerName;
       state.chatStaffId = action.payload.staffId;
       state.chatStaffName = action.payload.staffName;
+      state.chatRoomId = action.payload.roomId;
     },
   },
 });

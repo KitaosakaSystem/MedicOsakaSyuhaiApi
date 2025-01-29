@@ -11,11 +11,13 @@ const Chat = () => {
 
   const chatCustomerId =  useSelector(state => state.chatUserData.chatCustomerId);
   const chatCustomerName =  useSelector(state => state.chatUserData.chatCustomerName);
+  const chatRoomId =  useSelector(state => state.chatUserData.chatRoomId);
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => {
     console.log("Chat CustomerId",chatCustomerId)
+    console.log("ROOOOOOOOOM ID", chatRoomId);
     dispatch(changeText('(' + chatCustomerId + ')' + chatCustomerName))
   })
 

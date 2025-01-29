@@ -49,12 +49,13 @@ const CustomerList = () => {
   // 顧客選択時のハンドラー
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);
-    console.log("Customer.USerID",customer.customer.userid)
+    console.log("Customer",customer.customer)
     dispatch(changeChatUserData({
       customerId:customer.customer.customer_id,
       customerName:customer.customer.customer_name,
       staffId:loginUserId,
-      staffName:loginUserName
+      staffName:loginUserName,
+      roomId: customer.customer.room_id,
     }))
     navigate('/chat');
   };
