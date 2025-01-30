@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { addDoc, collection, doc, limit, limitToLast, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-const MAX_HOURLY_MESSAGES = 5;
+const MAX_HOURLY_MESSAGES = 15;
 const STORAGE_KEY = 'roomMessageCounts';
 
 const Chat = () => {
@@ -73,14 +73,36 @@ const Chat = () => {
           };
 
           // 既存のメッセージ配列から該当のメッセージを更新
-          setMessages(prevMessages => 
-            prevMessages.map(message => 
-              message.id === updatedMessage.id ? updatedMessage : message
-            )
-          );
+          setMessages([]);
+          setMessages(prevMessages => [...prevMessages, updatedMessage]);
+          // setMessages(prevMessages => 
+          //   prevMessages.map(message => 
+          //     message.id === updatedMessage.id ? updatedMessage : message
+          //   )
+          // );
         }
 
-        console.log("読んだのかい?",change.doc.data().read_at);
+        if(change.doc.data().read_at !== ''){
+          console.log("読んだのかい?",change.doc.data().read_at);
+          let returnText;
+
+          console.log("ACTION>",change.doc.data().selectedAction);
+
+          const messageText = {
+            'collect': 'ありがとうございます。検体の回収にむかいます。',
+            'no-collect': 'かしこまりました。\nまた次回、よろしくお願いいたします。',
+            'recollect': 'ありがとうございます。再回収に伺います。'
+          }[change.doc.data().selectedAction];
+
+          const newMessage = {
+            id: messages.length + 1,
+            text: messageText,
+            time: change.doc.data().read_at,
+            isCustomer: false
+          };
+          setMessages(prevMessages => [...prevMessages, newMessage]);
+        }
+        
 
       });
     }, (error) => {
@@ -194,8 +216,9 @@ const Chat = () => {
       const docRef = await setDoc(messageDoc, {
         room_id: chatRoomId,
         sender_id: loginUserId,
-        isCustomer: loginUserType === 'customer', // loginUserTypeが'customer'の場合、trueを設定,
+        isCustomer: true, // loginUserType === 'customer', // loginUserTypeが'customer'の場合、trueを設定,
         text: messageText,
+        selectedAction:selectedAction,
         time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
         is_read: false,
         read_at: '',

@@ -17,7 +17,7 @@ const ChatMessage = ({ message }) => {
               : 'bg-white text-gray-800'
           }`}
         >
-          <p className="text-lg">{text}</p>
+          <p className="text-lg whitespace-pre-line">{text}</p>
         </div>
 
         {!isCustomer  &&(
