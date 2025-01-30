@@ -9,8 +9,8 @@ import { useSelector } from 'react-redux';
 import { addDoc, collection, doc, limit, limitToLast, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-const MAX_DAILY_MESSAGES = 50;
-const STORAGE_KEY = 'messageCount';
+const MAX_HOURLY_MESSAGES = 5;
+const STORAGE_KEY = 'roomMessageCounts';
 
 const Chat = () => {
 
@@ -27,9 +27,6 @@ const Chat = () => {
     console.log("ROOOOOOOOOM ID", chatRoomId);
     dispatch(changeText('(' + chatCustomerId + ')' + chatCustomerName))
   })
-
-  const [messageCount, setMessageCount] = useState(0);
-  const [remainingMessages, setRemainingMessages] = useState(MAX_DAILY_MESSAGES);
 
   // const [messages, setMessages] = useState([
   //   { id: 1, text: '集配予定を確認いたします', time: '14:20', isCustomer: false },
@@ -67,7 +64,24 @@ const Chat = () => {
           // stateを更新（新しいメッセージを配列の末尾に追加）
           setMessages(prevMessages => [...prevMessages, newMessage]);
           console.log('メッセージ追加イベント',change.doc.id)
+
+        } else if (change.type === 'modified') {
+          // 更新されたドキュメントの新しいデータ
+          const updatedMessage = {
+            id: change.doc.id,
+            ...change.doc.data()
+          };
+
+          // 既存のメッセージ配列から該当のメッセージを更新
+          setMessages(prevMessages => 
+            prevMessages.map(message => 
+              message.id === updatedMessage.id ? updatedMessage : message
+            )
+          );
         }
+
+        console.log("読んだのかい?",change.doc.data().read_at);
+
       });
     }, (error) => {
       console.error('Error listening to messages:', error);
@@ -79,60 +93,53 @@ const Chat = () => {
   }, [chatRoomId]); // roomIdが変更されたときにリスナーを再設定
   //--------------------------------------------------------------------------------------------------------
 
+  // roomMessageCount--------------------------------------------------------------------------------------------------------------------------------------------------
+  const [messageCount, setMessageCount] = useState(0);
+  const [remainingMessages, setRemainingMessages] = useState(MAX_HOURLY_MESSAGES);
+
+  // 現在の時間帯のキーを取得（YYYY-MM-DD-HH形式）
+  const getCurrentHourKey = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}`;
+  };
+
+  // 現在の時間のカウントを取得
+  const getCurrentCount = () => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return 0;
+
+    const data = JSON.parse(stored);
+    const currentHourKey = getCurrentHourKey();
+    return (data[chatRoomId]?.[currentHourKey] || 0);
+  };
+
   useEffect(() => {
-    const loadMessageCounts = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const { date, counts } = JSON.parse(stored);
-        const storedDate = new Date(date).toDateString();
-        const today = new Date().toDateString();
-
-        // 日付が変わっていれば、全ルームのカウントをリセット
-        if (storedDate !== today) {
-          const newStorage = {
-            date: new Date().toISOString(),
-            counts: {}
-          };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(newStorage));
-          setMessageCount(0);
-          setRemainingMessages(MAX_DAILY_MESSAGES);
-        } else {
-          // 現在のルームのカウントを設定
-          const currentRoomCount = counts[chatRoomId] || 0;
-          setMessageCount(currentRoomCount);
-          setRemainingMessages(MAX_DAILY_MESSAGES - currentRoomCount);
-        }
-      } else {
-        // 初期データの作成
-        const initialStorage = {
-          date: new Date().toISOString(),
-          counts: {}
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStorage));
-      }
-    };
-
-    loadMessageCounts();
+    const currentCount = getCurrentCount();
+    setMessageCount(currentCount);
+    setRemainingMessages(MAX_HOURLY_MESSAGES - currentCount);
   }, [chatRoomId]);
 
   const updateMessageCount = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const data = JSON.parse(stored);
-      const newCounts = {
-        ...data.counts,
-        [chatRoomId]: (data.counts[chatRoomId] || 0) + 1
-      };
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        date: data.date,
-        counts: newCounts
-      }));
+    const data = stored ? JSON.parse(stored) : {};
+    const currentHourKey = getCurrentHourKey();
 
-      setMessageCount(newCounts[chatRoomId]);
-      setRemainingMessages(MAX_DAILY_MESSAGES - newCounts[chatRoomId]);
-    }
+    // 現在のルームのデータを更新
+    const roomData = data[chatRoomId] || {};
+    roomData[currentHourKey] = (roomData[currentHourKey] || 0) + 1;
+
+    const updatedData = {
+      ...data,
+      [chatRoomId]: roomData
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+    
+    const newCount = roomData[currentHourKey];
+    setMessageCount(newCount);
+    setRemainingMessages(MAX_HOURLY_MESSAGES - newCount);
   };
+  // roomMessageCount--------------------------------------------------------------------------------------------------------------------------------------------------
 
   const [selectedAction, setSelectedAction] = useState(null);
 
@@ -149,16 +156,15 @@ const Chat = () => {
     setSelectedAction(action === selectedAction ? null : action);
   };
 
+  
+
   const handleSend = async () => {
     if (!selectedAction) return;
 
     // 現在のルームのメッセージ数をチェック
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const data = stored ? JSON.parse(stored) : { counts: {} };
-    const currentCount = data.counts[chatRoomId] || 0;
-
-    if (currentCount >= MAX_DAILY_MESSAGES) {
-      alert('このルームの本日のメッセージ送信上限に達しました。明日また送信できます。');
+    const currentCount = getCurrentCount();
+    if (currentCount >= MAX_HOURLY_MESSAGES) {
+      alert('この時間帯のメッセージ送信上限に達しました。次の時間にお試しください。');
       return;
     }
 
@@ -217,7 +223,7 @@ const Chat = () => {
       </div>
 
       <div className="text-sm text-gray-600">
-        残りメッセージ送信可能回数: {remainingMessages} / {MAX_DAILY_MESSAGES}
+        残り送信可能回数: {remainingMessages} / {MAX_HOURLY_MESSAGES}
       </div>
 
       {chatCustomerId &&(
