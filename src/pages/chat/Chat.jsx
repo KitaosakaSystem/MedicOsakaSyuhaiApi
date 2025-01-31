@@ -16,6 +16,8 @@ const Chat = () => {
 
   const chatCustomerId =  useSelector(state => state.chatUserData.chatCustomerId);
   const chatCustomerName =  useSelector(state => state.chatUserData.chatCustomerName);
+  const chatStaffId =  useSelector(state => state.chatUserData.chatStaffId);
+  const chatStaffName =  useSelector(state => state.chatUserData.chatStaffName);
   const chatRoomId =  useSelector(state => state.chatUserData.chatRoomId);
   const loginUserId = useSelector(state => state.loginUserData.loginUserId);
   const loginUserType = useSelector(state => state.loginUserData.loginUserType);
@@ -25,7 +27,9 @@ const Chat = () => {
   useEffect(() => {
     console.log("Chat CustomerId",chatCustomerId)
     console.log("ROOOOOOOOOM ID", chatRoomId);
-    dispatch(changeText('(' + chatCustomerId + ')' + chatCustomerName))
+    const chatPartnerId = loginUserType === 'customer' ? chatStaffId : chatCustomerId;
+    const chatPartnerName = loginUserType === 'customer' ? chatStaffName : chatCustomerName;
+    dispatch(changeText('(' + chatPartnerId + ')' + chatPartnerName))
   })
 
   // const [messages, setMessages] = useState([

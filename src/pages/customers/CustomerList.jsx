@@ -31,7 +31,14 @@ const CustomerList = () => {
   const [customers,setCustomers] = useState([]);
   const storedRooms = localStorage.getItem('chatRooms');
 
+  //ローカルストレージより、設定画面で作成したチャットルームを読み込む
   useEffect(() => {
+
+    //顧客はローカルに保管しないので、
+    if(loginUserType === 'customer'){
+      return;
+    }
+
     if(storedRooms){
       const customerResults = [];
       const parsedRooms = JSON.parse(storedRooms);
@@ -46,15 +53,63 @@ const CustomerList = () => {
     }
   },[])
 
+  //顧客ログイン時、担当者表示
+  useEffect(() => {
+
+    //社員は処理スキップ
+    if(loginUserType === 'staff'){
+      return;
+    }
+
+    // クエリの作成
+    const q = query(
+      collection(db, 'chat_rooms'), // コレクション名を適切に変更してください
+      where('customer_id', '==', loginUserId)
+    );
+
+    // リアルタイムリスナーの設定
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added' || change.type === 'modified') {
+          const doc = {
+            customer:{
+              id: change.doc.id,
+              room_id: change.doc.data().room_id,
+              customer_id:change.doc.data().isRePickup ? '1' : '0', //change.doc.data().staff_id,
+              customer_name:'(メディック)' + change.doc.data().staff_name ,
+              staff_id:loginUserId,
+              address:'',
+              phone:'',
+            }
+          };
+          
+          setCustomers(prev => {
+            // 既存のドキュメントを更新または新規追加
+            const index = prev.findIndex(item => item.id === doc.id);
+            if (index !== -1) {
+              const updated = [...prev];
+              updated[index] = doc;
+              return updated;
+            }
+            return [...prev, doc];
+          });
+        }
+      });
+    });
+
+    // クリーンアップ関数
+    return () => unsubscribe();
+  }, []);
+
   // 顧客選択時のハンドラー
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);
-    console.log("Customer",customer.customer)
+    console.log("Customer選択したときのあたい",customer.customer)
     dispatch(changeChatUserData({
-      customerId:customer.customer.customer_id,
-      customerName:customer.customer.customer_name,
-      staffId:loginUserId,
-      staffName:loginUserName,
+      customerId: loginUserType === 'customer' ? loginUserId : customer.customer.customer_id,
+      customerName: loginUserType === 'customer' ? loginUserName : customer.customer.customer_name,
+      staffId: loginUserType === 'customer' ? customer.customer.customer_id :  loginUserId,
+      staffName: loginUserType === 'customer' ? customer.customer.customer_name : loginUserName,
       roomId: customer.customer.room_id,
     }))
     navigate('/chat');
@@ -70,11 +125,12 @@ const CustomerList = () => {
       )}
         {customers.map(customer => (
           <div 
-            key={customer.customer_code}
+            key={customer.customer.customer_id}
             onClick={() => handleCustomerSelect(customer)}
             className="bg-white rounded-lg shadow cursor-pointer hover:bg-gray-50 transition-colors"
           >
             <div className="p-4">
+
               {/* 施設名とステータス */}
               <div className="flex justify-between items-start mb-2">
                 <h2 className="text-lg font-medium">
@@ -92,18 +148,20 @@ const CustomerList = () => {
               </div>
 
               {/* 住所 */}
-              <div className="flex items-center text-gray-600 mb-2">
-                <MapPin size={16} className="mr-2" />
-                <span className="text-sm">{customer.customer.address}</span>
-              </div>
+              {loginUserType === 'staff' &&
+                <div className="flex items-center text-gray-600 mb-2">
+                  <MapPin size={16} className="mr-2" />
+                  <span className="text-sm">{customer.customer.address}</span>
+                </div>
+              }
 
               {/* 電話番号 */}
-              <div className="flex items-center text-gray-600 mb-2">
-                <Phone size={16} className="mr-2" />
-                <span className="text-sm">{customer.customer.phone}</span>
-              </div>
-
-              {/* 訪問スケジュール */}
+              {loginUserType === 'staff' &&
+                <div className="flex items-center text-gray-600 mb-2">
+                  <Phone size={16} className="mr-2" />
+                  <span className="text-sm">{customer.customer.phone}</span>
+                </div>  
+              }
 
             </div>
           </div>

@@ -93,16 +93,18 @@ const Settings = () => {
             customer_id: schedule.customer_id,
             customer_name: schedule.name,
             staff_id: loginUserId,
+            staff_name: loginUserName,
             pickup_status: "1",
+            isRePickup:schedule.isRePickup ,
             date: new Date().toISOString().split('T')[0],
             created_at: serverTimestamp(),
         };
 
         chatRooms.push(chatRoomData) //ローカルストレージ保管用に足していく
         // console.log("chat_Data",chatRoomData);
-        // const docRef = doc(db, 'chat_rooms', userId + '_' + schedule.customer_id);
-        // await setDoc(docRef, chatRoomData);
-        //console.log('チャットルームが作成されました:', docRef.id);
+        const docRef = doc(db, 'chat_rooms', loginUserId + '_' + schedule.customer_id);
+        await setDoc(docRef, chatRoomData);
+        console.log('チャットルームが作成されました:', docRef.id);
 
     } catch (error) {
         console.error('エラーが発生しました:', error);
@@ -120,6 +122,7 @@ const Settings = () => {
         // console.log("Doc.Data()やでー",data)
         const mondaySchedule = data.schedule.monday;
         const chatRooms = [];
+
         mondaySchedule.forEach((schedule, index) => {
           console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + schedule.name  + " " + schedule.order);
           createChatRoom(documentId,schedule,chatRooms)          
@@ -155,6 +158,7 @@ const Settings = () => {
 
     if (selectedCourse === loginTodayRouteId){
       console.log('同じ選んでるさかいな、あかんで');
+      alert('登録中のコースと同じコースを選択しています\n不具合がある場合は、再ログインしてからコースを設定してください。')
       return;
     }
    
