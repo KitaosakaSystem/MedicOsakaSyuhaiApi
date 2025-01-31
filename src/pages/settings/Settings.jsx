@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { db } from '../../firebase';
-import { addDoc, collection, doc, getDoc, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 import { getTodayDate } from '../../utils/dateUtils'
@@ -85,8 +85,34 @@ const Settings = () => {
 
 
   //console.log("loginName",loginName);
+
+  //ルートマスター割り当て
+  const updateOrCreateStaffData = async (documentId, fieldName, staffData) => {
+    try {
+      const docRef = doc(db, 'routes', String(documentId));
+      const docSnap = await getDoc(docRef);
+  
+      if (docSnap.exists()) {
+        // ドキュメントが存在する場合、既存のデータを保持しながら更新
+        const existingData = docSnap.data();
+        await setDoc(docRef, {
+          ...existingData,
+          [fieldName]: staffData
+        });
+      } else {
+        // ドキュメントが存在しない場合、新規作成
+        await setDoc(docRef, {
+          [fieldName]: staffData
+        });
+      }
+      console.log('Document successfully updated/created');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
    // チャットルーム作成
-   const createChatRoom = async (routeId,schedule,chatRooms) => {
+  const createChatRoom = async (routeId,schedule,chatRooms) => {
     try {
         const chatRoomData = {
             room_id: loginUserId + '_' + schedule.customer_id,
@@ -131,6 +157,14 @@ const Settings = () => {
         //ローカルストレージに保管しておく
         // console.log("ChaaaaatRoooooooooooms",chatRooms);
         localStorage.setItem('chatRooms', JSON.stringify(chatRooms));
+
+        //コースマスター登録
+        const newStaffData = {
+          staff_id: loginUserId,
+          staff_name: loginUserName
+        };
+        updateOrCreateStaffData(data.kyoten_id,documentId,newStaffData);
+
         return mondaySchedule;
       } else {
         console.log('Document not found');
@@ -149,6 +183,8 @@ const Settings = () => {
   const handleBottomMarginChange = (enabled) => {
     //console.log('ボトムメニューマージン:', enabled ? '有効' : '無効');
   };
+
+
 
   const handleSubmit = () => {
     if (!selectedCourse){
@@ -175,6 +211,7 @@ const Settings = () => {
 
     //曜日ごとのコース一覧を読んでチャットルーム立てる
     getCustomerSchedule(selectedCourse);
+
   };
 
   const handleLogout = () => {

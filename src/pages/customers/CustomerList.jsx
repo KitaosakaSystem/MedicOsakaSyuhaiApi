@@ -70,7 +70,10 @@ const CustomerList = () => {
     // リアルタイムリスナーの設定
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added' || change.type === 'modified') {
+
+        if (change.type === 'removed') {
+          setCustomers(prev => prev.filter(doc => doc.id !== change.doc.id));
+        }else if (change.type === 'added' || change.type === 'modified') {
           const doc = {
             customer:{
               id: change.doc.id,

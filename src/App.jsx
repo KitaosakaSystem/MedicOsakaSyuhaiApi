@@ -29,6 +29,7 @@ const App = () => {
       const loginUserId = localStorage.getItem('userId');
       const loginUserName = localStorage.getItem('userName');
       const loginUserType =  localStorage.getItem('userType');
+      const loginKyotenId =   localStorage.getItem('kyotenId');
       
       //本日の担当コース処理---------------------------------------
       let todayRouteId = ''
@@ -50,6 +51,7 @@ const App = () => {
       dispatch(changeLoginUserData({userId:loginUserId,
                                     userName:loginUserName,
                                     userType:loginUserType,
+                                    kyotenId:loginKyotenId,
                                     todayRouteId:todayRouteId}))
     }
   }, []);

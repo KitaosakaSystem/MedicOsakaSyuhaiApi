@@ -68,6 +68,7 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('userId', userId);
             localStorage.setItem('userName', userData.name);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'staff');
+            localStorage.setItem('kyotenId', userId.kyoten_id);
             localStorage.setItem('todayRoute', '');
             localStorage.setItem('selectRouteIds', '');
             localStorage.setItem('chatRooms', '');
@@ -77,6 +78,7 @@ const Login = ({ onLoginSuccess }) => {
             dispatch(changeLoginUserData({userId:userId,
                                           userName:userData.name, 
                                           userType:userId.length === 4 ? 'customer' : 'staff',
+                                          kyotenId:userId.kyoten_id,
                                           todayRouteId:''
                                         }));   
             

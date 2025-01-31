@@ -8,6 +8,7 @@ export const loginUserDataSlice = createSlice({
     loginUserId: "",
     loginUserName: "",
     loginUserType:"",
+    loginKyotenId:"",
     loginTodayRouteId:"",
   },
   // 内部のデータにアクセスするための処理(処理名:sayhello)
@@ -16,6 +17,7 @@ export const loginUserDataSlice = createSlice({
       state.loginUserId = action.payload.userId;
       state.loginUserName = action.payload.userName;
       state.loginUserType = action.payload.userType;
+      state.loginKyotenId = action.payload.kyotenId;
       state.loginTodayRouteId = action.payload.todayRouteId;
     },
   },
