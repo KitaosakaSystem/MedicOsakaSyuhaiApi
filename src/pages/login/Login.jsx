@@ -68,7 +68,7 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('userId', userId);
             localStorage.setItem('userName', userData.name);
             localStorage.setItem('userType', userId.length === 4 ? 'customer' : 'staff');
-            localStorage.setItem('kyotenId', userId.kyoten_id);
+            localStorage.setItem('kyotenId', userData.kyoten_id);
             localStorage.setItem('todayRoute', '');
             localStorage.setItem('selectRouteIds', '');
             localStorage.setItem('chatRooms', '');

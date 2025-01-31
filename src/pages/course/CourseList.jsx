@@ -2,47 +2,81 @@ import { useEffect, useState } from 'react';
 import { MapPin, Clock, Building2, ChevronRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
+import { doc, getDoc, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 const CourseList = () => {
 
-  const loginUserType = useSelector(state => state.loginUserData.loginUserType);
-
+  const loginUserType =  localStorage.getItem('userType');
+  const loginKyotenId =   localStorage.getItem('kyotenId');
   // actionを操作するための関数取得
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(changeText('コース担当一覧'))
   })
 
-  // サンプルデータ
-  const routes = [
-    {
-      id: 'C61',
-      name: 'システム：福井',
-      status: 'online'
-    },
-    {
-      id: 'C62',
-      name: '',
-      status: 'offline'
-    },
-    {
-      id: 'C63',
-      name: '北営業：中野　良一',
-      status: 'online'
-    },
+  const [routes, setRoutes] = useState([
+    // {
+    //   id: 'C61',
+    //   name: 'システム：福井',
+    //   status: 'online'
+    // },
+    // {
+    //   id: 'C62',
+    //   name: '',
+    //   status: 'offline'
+    // },
+    // {
+    //   id: 'C63',
+    //   name: '北営業：中野　良一',
+    //   status: 'online'
+    // },
     // スクロールをテストするためのダミーデータ
-    ...Array.from({ length: 10 }, (_, i) => ({
-      id: `C6${i + 4}`,
-      name: `北営業：${i + 1}`,
-      status: i % 2 === 0 ? 'online' : 'offline'
-    }))
-  ];
+    // ...Array.from({ length: 10 }, (_, i) => ({
+    //   id: `C6${i + 4}`,
+    //   name: `北営業：${i + 1}`,
+    //   status: i % 2 === 0 ? 'online' : 'offline'
+    // }))
+  ]);
 
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const [selectedId, setSelectedId] = useState('21');
-  const customerIds = ['21', '22', '23'];
+  useEffect(() => {
+    // ドキュメントの変更を監視
+    const routeRef = doc(db, 'routes', loginKyotenId);
+    const unsubscribe = onSnapshot(routeRef, (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        
+        const newRoutes = Object.entries(data)
+          .sort(([keyA], [keyB]) => {
+            const numA = parseInt(keyA.slice(1));
+            const numB = parseInt(keyB.slice(1));
+            return numA - numB;
+          })
+          .map(([key, value]) => ({
+            id: key.toUpperCase(),
+            name: value.staff_name,
+            status: value.staff_name ? 'online' : 'offline'
+          }));
 
+        // 重複を避けながらデータを更新
+        setRoutes(prevRoutes => {
+          const uniqueRoutes = [...prevRoutes, ...newRoutes].reduce((acc, route) => {
+            acc[route.id] = route;
+            return acc;
+          }, {});
+          return Object.values(uniqueRoutes);
+        });
+      }
+    }, (error) => {
+      console.error("Error fetching document:", error);
+    });
+
+    // クリーンアップ関数
+    return () => unsubscribe();
+  }, []); // 空の依存配列でコンポーネントのマウント時にのみ実行
+  
   return (
     <>
       {loginUserType === 'customer' ? (
@@ -53,15 +87,7 @@ const CourseList = () => {
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
 
           <div className="space-y-2 rounded-lg  mb-4 overflow-hidden">
-            <label className="text-base font-medium text-gray-700">拠点コード</label>
-              <select 
-                value={selectedId} 
-                onChange={(e) => setSelectedId(e.target.value)}
-              >
-                {customerIds.map(id => (
-                  <option key={id} value={id}>{id}</option>
-                ))}
-              </select>
+            <label className="text-base font-medium text-gray-700">拠点コード {loginKyotenId}</label>
           </div>
 
           {routes.map(route => (
