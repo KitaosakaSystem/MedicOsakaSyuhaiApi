@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { addDoc, collection, doc, limit, limitToLast, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 
-const MAX_HOURLY_MESSAGES = 15;
+const MAX_HOURLY_MESSAGES = 5;
 const STORAGE_KEY = 'roomMessageCounts';
 
 const Chat = () => {

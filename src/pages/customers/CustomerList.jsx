@@ -60,48 +60,55 @@ const CustomerList = () => {
     if(loginUserType === 'staff'){
       return;
     }
-
-    // クエリの作成
-    const q = query(
-      collection(db, 'chat_rooms'), // コレクション名を適切に変更してください
-      where('customer_id', '==', loginUserId)
-    );
-
-    // リアルタイムリスナーの設定
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-
-        if (change.type === 'removed') {
-          setCustomers(prev => prev.filter(doc => doc.id !== change.doc.id));
-        }else if (change.type === 'added' || change.type === 'modified') {
-          const doc = {
-            customer:{
-              id: change.doc.id,
-              room_id: change.doc.data().room_id,
-              customer_id:change.doc.data().isRePickup ? '1' : '0', //change.doc.data().staff_id,
-              customer_name:'(メディック)' + change.doc.data().staff_name ,
-              staff_id:loginUserId,
-              address:'',
-              phone:'',
-            }
-          };
-          
-          setCustomers(prev => {
-            // 既存のドキュメントを更新または新規追加
-            const index = prev.findIndex(item => item.id === doc.id);
-            if (index !== -1) {
-              const updated = [...prev];
-              updated[index] = doc;
-              return updated;
-            }
-            return [...prev, doc];
-          });
-        }
+    try {
+      // 現在の日付を取得してYYYY-MM-DD形式にフォーマット
+      const today = new Date();
+      const targetDate = today.toISOString().split('T')[0];  // YYYY-MM-DD形式
+      
+      // クエリの作成
+      const q = query(
+        collection(db, 'chat_rooms'), // コレクション名を適切に変更してください
+        where('customer_id', '==', loginUserId),
+        where('date','==',targetDate)
+      );
+      
+      // リアルタイムリスナーの設定
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'removed') {
+            setCustomers(prev => prev.filter(doc => doc.id !== change.doc.id));
+          }else if (change.type === 'added' || change.type === 'modified') {
+            const doc = {
+              customer:{
+                id: change.doc.id,
+                room_id: change.doc.data().room_id,
+                customer_id:change.doc.data().isRePickup ? '1' : '0', //change.doc.data().staff_id,
+                customer_name:'(メディック)' + change.doc.data().staff_name ,
+                staff_id:loginUserId,
+                address:'',
+                phone:'',
+              }
+            };
+            
+            setCustomers(prev => {
+              // 既存のドキュメントを更新または新規追加
+              const index = prev.findIndex(item => item.id === doc.id);
+              if (index !== -1) {
+                const updated = [...prev];
+                updated[index] = doc;
+                return updated;
+              }
+              return [...prev, doc];
+            });
+          }
+        });
       });
-    });
 
-    // クリーンアップ関数
-    return () => unsubscribe();
+      // クリーンアップ関数
+      return () => unsubscribe();
+    }catch (err) {
+      console.log(err);
+    }
   }, []);
 
   // 顧客選択時のハンドラー
