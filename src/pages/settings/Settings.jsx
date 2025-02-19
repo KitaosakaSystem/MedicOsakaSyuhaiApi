@@ -122,6 +122,8 @@ const Settings = () => {
             staff_name: loginUserName,
             pickup_status: "1",
             isRePickup:schedule.isRePickup ,
+            address:schedule.address,
+            phone:schedule.phone,
             date: new Date().toISOString().split('T')[0],
             created_at: serverTimestamp(),
         };
