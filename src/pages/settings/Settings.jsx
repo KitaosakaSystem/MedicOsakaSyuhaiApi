@@ -31,6 +31,8 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
 
   const [chatRooms, setChatRooms] = useState([]);
+  // 選択されたコースをテキストボックスに表示するための状態
+  const [routeTextInput, setRouteTextInput] = useState("");
 
   useEffect(() => {
 
@@ -187,15 +189,20 @@ const Settings = () => {
     //console.log('ボトムメニューマージン:', enabled ? '有効' : '無効');
   };
 
-
+  // ドロップダウンの選択変更時の処理
+  const handleCourseChange = (e) => {
+    const selectedValue = e.target.value;
+    setSelectedCourse(selectedValue);
+    setRouteTextInput(selectedValue);
+  };
 
   const handleSubmit = () => {
-    if (!selectedCourse){
+    if (!selectedCourse && !routeTextInput){
       console.log('なんも選んでへんさかいな、それはあかんわ');
       return;
     }
 
-    if (selectedCourse === loginTodayRouteId){
+    if (routeTextInput === loginTodayRouteId){
       console.log('同じ選んでるさかいな、あかんで');
       alert('登録中のコースと同じコースを選択しています\n不具合がある場合は、再ログインしてからコースを設定してください。')
       return;
@@ -203,17 +210,19 @@ const Settings = () => {
    
     const newData = {
       date: getTodayDate(), // YYYY-MM-DD形式
-      todayRoute: selectedCourse
+      todayRoute: routeTextInput
     };
     localStorage.setItem('todayRoute', JSON.stringify(newData));
 
     dispatch(changeLoginUserData({userId:loginUserId,
       userName:loginUserName,
       userType:loginUserType,
-      todayRouteId:selectedCourse}))
+      todayRouteId:routeTextInput}))
+
+    localStorage.setItem('chatRooms', '');
 
     //曜日ごとのコース一覧を読んでチャットルーム立てる
-    getCustomerSchedule(selectedCourse);
+    getCustomerSchedule(routeTextInput);
 
   };
 
@@ -256,7 +265,7 @@ const Settings = () => {
             <label className="text-base font-medium text-gray-700">担当コース</label>
             <select
               value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
+              onChange={handleCourseChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">コースを選択</option>
@@ -266,6 +275,18 @@ const Settings = () => {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* テキストボックスを追加 */}
+          <div className="space-y-2">
+            <label className="text-base font-medium text-gray-700">選択したコース</label>
+            <input
+              type="text"
+              value={routeTextInput}
+              onChange={(e) => setRouteTextInput(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="選択したコースが表示されます"
+            />
           </div>
 
           <div className="pt-4 space-y-4">
