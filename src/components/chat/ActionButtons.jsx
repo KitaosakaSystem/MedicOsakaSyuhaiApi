@@ -10,7 +10,7 @@ const ActionButtons = ({ selectedAction, onActionSelect, onSend }) => {
 
   return (
     <div className="bg-white border-t border-teal-100 p-4">
-      <div className="flex justify-between items-center space-x-4▼">
+      <div className="flex justify-between items-center space-x-4">
         {actions.map(({ id, icon: Icon, label, size }) => {
           const isSendButton = id === 'send';
           const isSelected = selectedAction === id && !isSendButton;
@@ -22,13 +22,18 @@ const ActionButtons = ({ selectedAction, onActionSelect, onSend }) => {
               disabled={isSendButton && !selectedAction}
               className={`
                 flex-1 flex flex-col items-center p-3 rounded-lg 
-                transition-colors
+                transition-colors duration-200
                 ${isSendButton && !selectedAction ? 'opacity-50 cursor-not-allowed' : 'hover:bg-teal-50'}
-                ${isSelected ? 'border-teal-600' : ''}
+                ${isSelected ? 'bg-teal-100 text-teal-700' : 'text-teal-600'}
               `}
             >
-              <Icon size={size} className="text-teal-600" />
-              <span className="text-xs mt-1 text-teal-600">{label}</span>
+              <Icon 
+                size={size} 
+                className={`${isSelected ? 'text-teal-700' : 'text-teal-600'}`} 
+              />
+              <span className={`text-xs mt-1 ${isSelected ? 'text-teal-700' : 'text-teal-600'}`}>
+                {label}
+              </span>
             </button>
           );
         })}
