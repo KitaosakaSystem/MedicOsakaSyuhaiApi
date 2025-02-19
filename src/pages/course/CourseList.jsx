@@ -15,29 +15,7 @@ const CourseList = () => {
     dispatch(changeText('コース担当一覧'))
   })
 
-  const [routes, setRoutes] = useState([
-    // {
-    //   id: 'C61',
-    //   name: 'システム：福井',
-    //   status: 'online'
-    // },
-    // {
-    //   id: 'C62',
-    //   name: '',
-    //   status: 'offline'
-    // },
-    // {
-    //   id: 'C63',
-    //   name: '北営業：中野　良一',
-    //   status: 'online'
-    // },
-    // スクロールをテストするためのダミーデータ
-    // ...Array.from({ length: 10 }, (_, i) => ({
-    //   id: `C6${i + 4}`,
-    //   name: `北営業：${i + 1}`,
-    //   status: i % 2 === 0 ? 'online' : 'offline'
-    // }))
-  ]);
+  const [routes, setRoutes] = useState([]);
 
   const [selectedCourse, setSelectedCourse] = useState(null);
 
@@ -47,7 +25,10 @@ const CourseList = () => {
     const unsubscribe = onSnapshot(routeRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
-        
+
+        // 現在の日付を取得（YYYY-MM-DD形式）
+        const today = new Date().toISOString().split('T')[0];
+
         const newRoutes = Object.entries(data)
           .sort(([keyA], [keyB]) => {
             const numA = parseInt(keyA.slice(1));
@@ -56,8 +37,8 @@ const CourseList = () => {
           })
           .map(([key, value]) => ({
             id: key.toUpperCase(),
-            name: value.staff_name,
-            status: value.staff_name ? 'online' : 'offline'
+            name: value.login_date === today ? value.staff_name : '', 
+            status: value.login_date === today ? 'online' : 'offline'
           }));
 
         // 重複を避けながらデータを更新

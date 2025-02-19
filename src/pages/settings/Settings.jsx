@@ -163,7 +163,8 @@ const Settings = () => {
         //コースマスター登録
         const newStaffData = {
           staff_id: loginUserId,
-          staff_name: loginUserName
+          staff_name: loginUserName,
+          login_date: new Date().toISOString().split('T')[0]
         };
         updateOrCreateStaffData(data.kyoten_id,documentId,newStaffData);
 
