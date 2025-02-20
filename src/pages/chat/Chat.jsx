@@ -182,9 +182,12 @@ const Chat = () => {
     setSelectedAction(action === selectedAction ? null : action);
   };
 
+
+
   const handleSend = async () => {
     if (!selectedAction) return;
 
+    //スタッフメッセージ処理------------------------------------------------------
     if (selectedAction == 'staff-replay'){
       console.log("スタッフーーーーーーーーーーメッセージ");
       setSelectedAction(null);
@@ -201,9 +204,37 @@ const Chat = () => {
         console.log('送信者ID:', message.sender_id);
         console.log('テキスト:', message.text);
         console.log('時刻:', message.time);
+
+        try {
+          const messagesRefStaff = collection(db, 'messages');
+          
+          // room_idをドキュメントIDとして指定 > メッセージは固定やし、ドキュメント１個でいいんじゃね？FireStoreの読み込み回数の節約も考慮して
+          const messageDocStaff = doc(messagesRefStaff, message.room_id);
+          // まずドキュメントをサーバータイムスタンプで追加
+          const docRefStaff = await setDoc(messageDocStaff, {
+            room_id: message.room_id,
+            sender_id: message.sender_id,
+            isCustomer: message.isCustomer, // loginUserTypeが'customer'の場合、trueを設定,
+            text: message.text,
+            selectedAction:message.selectedAction,
+            time: message.time,
+            is_staff_read: true,
+            read_at: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+          });
+          console.log('メッセージをスタッフが既読したフラグを追加しました:', chatRoomId);
+    
+          updateMessageCount();
+          //return docRef.id;
+        } catch (error) {
+          console.error('エラーが発生しました:', error);
+          throw error;
+        }
+
       }    
       return;
     }
+
+    //顧客メッセージ処理------------------------------------------------------
 
     // 現在のルームのメッセージ数をチェック
     const currentCount = getCurrentCount();
