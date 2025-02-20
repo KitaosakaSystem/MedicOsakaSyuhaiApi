@@ -42,11 +42,13 @@ const CustomerList = () => {
     if(storedRooms){
       const customerResults = [];
       const parsedRooms = JSON.parse(storedRooms);
+
       parsedRooms.map((room, index) => {
         // console.log(`Room ${index + 1}:`, {room_id: room.room_id,customer_name: room.customer_name,customer_id: room.customer_id,
         //             staff_id: room.staff_id,date: room.date,pickup_status: room.pickup_status});
         customerResults.push({customer_code: room.room_id,customer:parsedRooms[index],})
       });
+      
       // console.log('=======================');
       // console.log(customerResults)
       setCustomers(customerResults);

@@ -49,9 +49,9 @@ const Chat = () => {
     // room_idが一致し、送信時刻でソート
     const q = query(
       messagesRef,
-      where('room_id', '==', chatRoomId),
-      orderBy('time', 'asc'),
-      limitToLast(20)
+      where('room_id', '==', chatRoomId)
+      // orderBy('time', 'asc'),
+      // limitToLast(20)
     );
 
     // リアルタイムリスナーの設定
@@ -182,10 +182,28 @@ const Chat = () => {
     setSelectedAction(action === selectedAction ? null : action);
   };
 
-  
-
   const handleSend = async () => {
     if (!selectedAction) return;
+
+    if (selectedAction == 'staff-replay'){
+      console.log("スタッフーーーーーーーーーーメッセージ");
+      setSelectedAction(null);
+      if (!messages || messages.length === 0) {
+        console.log('messagesが存在しないか、空です');
+      }else{
+        const message = messages[0];
+        console.log('ID:', message.id);
+        console.log('顧客フラグ:', message.isCustomer);
+        console.log('スタッフ既読:', message.is_staff_read);
+        console.log('既読時刻:', message.read_at);
+        console.log('ルームID:', message.room_id);
+        console.log('選択アクション:', message.selectedAction);
+        console.log('送信者ID:', message.sender_id);
+        console.log('テキスト:', message.text);
+        console.log('時刻:', message.time);
+      }    
+      return;
+    }
 
     // 現在のルームのメッセージ数をチェック
     const currentCount = getCurrentCount();
@@ -201,13 +219,6 @@ const Chat = () => {
     }[selectedAction];
 
     if (messageText) {
-      // const newMessage = {
-      //   id: messages.length + 1,
-      //   text: messageText,
-      //   time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-      //   isUser: true
-      // };
-      // setMessages([...messages, newMessage]);
       setSelectedAction(null);
     }
 
@@ -220,11 +231,11 @@ const Chat = () => {
       const docRef = await setDoc(messageDoc, {
         room_id: chatRoomId,
         sender_id: loginUserId,
-        isCustomer: true, // loginUserType === 'customer', // loginUserTypeが'customer'の場合、trueを設定,
+        isCustomer: loginUserType === 'customer', // loginUserTypeが'customer'の場合、trueを設定,
         text: messageText,
         selectedAction:selectedAction,
         time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-        is_read: false,
+        is_staff_read: false,
         read_at: '',
       });
       console.log('メッセージを追加しました:', chatRoomId);
@@ -235,8 +246,7 @@ const Chat = () => {
       console.error('エラーが発生しました:', error);
       throw error;
     }
-
-
+    
   };
 
   return (

@@ -1,12 +1,27 @@
 import { Check, X, RotateCcw, Send } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 const ActionButtons = ({ selectedAction, onActionSelect, onSend }) => {
-  const actions = [
-    { id: 'collect', icon: Check, label: '検体あり', size: 32 },
-    { id: 'no-collect', icon: X, label: '検体なし', size: 32 },
-    { id: 'recollect', icon: RotateCcw, label: '再集配', size: 32 },
-    { id: 'send', icon: Send, label: '送信', size: 18 }
-  ];
+
+  const loginUserType = useSelector(state => state.loginUserData.loginUserType);
+
+  let actions
+
+  if(loginUserType === 'customer'){
+    actions = [
+      { id: 'collect', icon: Check, label: '検体あり', size: 32 },
+      { id: 'no-collect', icon: X, label: '検体なし', size: 32 },
+      { id: 'recollect', icon: RotateCcw, label: '再集配', size: 32 },
+      { id: 'send', icon: Send, label: '送信', size: 18 }
+    ];
+  }else{
+    actions = [
+      { id: 'staff-replay', icon: Check, label: '定型文を返信', size: 32 },
+      { id: 'send', icon: Send, label: '送信', size: 18 }
+    ];
+    console.log("staff actions",actions)
+  }
+
 
   return (
     <div className="bg-white border-t border-teal-100 p-4">
