@@ -6,7 +6,7 @@ import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, collectionGroup, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
 const CustomerList = () => {
@@ -70,14 +70,10 @@ const CustomerList = () => {
               if (customerIndex !== -1) {
                 newCustomers[customerIndex] = {
                   ...newCustomers[customerIndex],
-                  customer: {
-                    ...newCustomers[customerIndex].customer,
-                    selectedAction: selectedAction,
-                    read_at: read_at
-                  }
-                }
+                  selectedAction: selectedAction,
+                  read_at:read_at
+                };
               }
-              console.log("newCustomers",newCustomers)
               return newCustomers;
             });
           }
@@ -92,105 +88,56 @@ const CustomerList = () => {
   }, [loginUserType, storedRooms]);
 
   //顧客ログイン時、担当者表示
-  // データを更新する関数
-  const updateCustomers = async () => {
+  useEffect(() => {
+    if (loginUserType === 'staff') {
+      return;
+    }
+    
     try {
       const today = new Date();
       const targetDate = today.toISOString().split('T')[0];
       
-      // chat_roomsの取得
-      const chatRoomsQuery = query(
+      const q = query(
         collection(db, 'chat_rooms'),
         where('customer_id', '==', loginUserId),
         where('date', '==', targetDate)
       );
-      const chatRoomsSnapshot = await getDocs(chatRoomsQuery);
       
-      // messagesの取得
-      const messagesSnapshot = await getDocs(collection(db, 'messages'),where('customer_id', '==', loginUserId));
-      
-      // messagesデータをroom_idでマップ化
-      const messagesMap = {};
-      messagesSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.room_id) {
-          messagesMap[data.room_id] = {
-            read_at: data.read_at,
-            selectedAction: data.selectedAction,
-          };
-        }
-      });
-
-      // 顧客リストの作成
-      const updatedCustomers = chatRoomsSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          customer: {
-            id: doc.id,
-            room_id: data.room_id,
-            customer_id: data.isRePickup ? '1' : '0',
-            customer_name: '(メディック)' + data.staff_name,
-            staff_id: loginUserId,
-            address: '',
-            phone: '',
-            read_at: messagesMap[data.room_id]?.read_at || null,
-            selectedAction:  messagesMap[data.room_id]?.selectedAction || null
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'removed') {
+            setCustomers(prev => prev.filter(doc => doc.id !== change.doc.id));
+          } else if (change.type === 'added' || change.type === 'modified') {
+            const doc = {
+              customer: {
+                id: change.doc.id,
+                room_id: change.doc.data().room_id,
+                customer_id: change.doc.data().isRePickup ? '1' : '0',
+                customer_name: '(メディック)' + change.doc.data().staff_name,
+                staff_id: loginUserId,
+                address: '',
+                phone: '',
+              }
+            };
+            
+            setCustomers(prev => {
+              const index = prev.findIndex(item => item.id === doc.id);
+              if (index !== -1) {
+                const updated = [...prev];
+                updated[index] = doc;
+                return updated;
+              }
+              return [...prev, doc];
+            });
           }
-        };
-      });
-      console.log("updateCustomers",updatedCustomers)
-
-      setCustomers(updatedCustomers);
-    } catch (err) {
-      console.log('Error updating customers:', err);
-    }
-  };
-
-  // chat_roomsコレクションの監視
-  useEffect(() => {
-    if (loginUserType === 'staff') {
-      return;
-    }
-
-    try {
-      const today = new Date();
-      const targetDate = today.toISOString().split('T')[0];
-      
-      const chatRoomsQuery = query(
-        collection(db, 'chat_rooms'),
-        where('customer_id', '==', loginUserId),
-        where('date', '==', targetDate)
-      );
-
-      const unsubscribe = onSnapshot(chatRoomsQuery, () => {
-        updateCustomers();
+        });
       });
 
       return () => unsubscribe();
     } catch (err) {
-      console.log('Error in chat rooms effect:', err);
+      console.log(err);
     }
-  }, [loginUserType, loginUserId]);
-
-  // messagesコレクションの監視
-  useEffect(() => {
-    if (loginUserType === 'staff') {
-      return;
-    }
-
-    try {
-      const messagesQuery = query(collection(db, 'messages'));
-
-      const unsubscribe = onSnapshot(messagesQuery, () => {
-        updateCustomers();
-      });
-
-      return () => unsubscribe();
-    } catch (err) {
-      console.log('Error in messages effect:', err);
-    }
-  }, [loginUserType, loginUserId]);
+  }, []);
 
   const handleCustomerSelect = (customer) => {
     setCurrentFacility(customer);
@@ -225,20 +172,20 @@ const CustomerList = () => {
                 </h2>
                 <span 
                   className={`px-2 py-1 rounded-full text-xs ${
-                    customer.customer.selectedAction === 'collect'
+                    customer.selectedAction === 'collect'
                       ? 'bg-green-100 text-green-800'
-                      : customer.customer.selectedAction === 'recollect'
+                      : customer.selectedAction === 'recollect'
                       ? 'bg-yellow-100 text-yellow-800'
-                      : customer.customer.selectedAction === 'no-collect'
+                      : customer.selectedAction === 'no-collect'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {customer.customer.selectedAction === 'collect'
+                  {customer.selectedAction === 'collect'
                     ? '検体あり'
-                    : customer.customer.selectedAction === 'recollect'
+                    : customer.selectedAction === 'recollect'
                     ? '再集配あり'
-                    : customer.customer.selectedAction === 'no-collect'
+                    : customer.selectedAction === 'no-collect'
                     ? '検体なし'
                     : '未選択'}
                 </span>
