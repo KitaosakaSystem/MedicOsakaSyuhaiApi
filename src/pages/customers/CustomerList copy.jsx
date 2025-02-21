@@ -6,7 +6,7 @@ import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { useEffect, useState } from 'react';
 import { db } from '../../firebase';
-import { collection, onSnapshot, query, where, collectionGroup } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, where, doc } from 'firebase/firestore';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 
 const CustomerList = () => {
@@ -34,7 +34,8 @@ const CustomerList = () => {
     }
 
     const parsedRooms = JSON.parse(storedRooms);
-    
+    const unsubscribes = [];
+
     // 初期データの設定
     const initialCustomers = parsedRooms.map((room) => ({
       customer_code: room.room_id,
@@ -43,48 +44,44 @@ const CustomerList = () => {
     }));
     setCustomers(initialCustomers);
 
-    // messageコレクションの変更を監視
-    const q = query(collection(db, 'messages'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added' || change.type === 'modified') {
-          const messageDoc = change.doc;
-          const room_id = messageDoc.id;
-          
-          // parsedRoomsに存在するroom_idのみを処理
-          const matchingRoom = parsedRooms.find(room => room.room_id === room_id);
-          if (matchingRoom) {
-            const selectedAction = messageDoc.data().selectedAction;
-            const read_at = messageDoc.data().read_at
-
-            console.log("selectedAction",selectedAction)
-            console.log("read_at",read_at)
-
+    // 各ルームのmessageドキュメントを監視
+    parsedRooms.forEach((room, index) => {
+      const unsubscribe = onSnapshot(
+        doc(db, 'messages', room.room_id),
+        (doc) => {
+          console.log("room.room_id",room.room_id)
+          if (doc.exists()) {
+            const selectedAction = doc.data().selectedAction;
+            console.log("チェーーーーーーーーン時", selectedAction);
             setCustomers(prevCustomers => {
               const newCustomers = [...prevCustomers];
+              // 該当するルームのselectedActionを更新
               const customerIndex = newCustomers.findIndex(
-                customer => customer.customer_code === room_id
+                customer => customer.customer_code === room.room_id
               );
-              
               if (customerIndex !== -1) {
                 newCustomers[customerIndex] = {
                   ...newCustomers[customerIndex],
-                  selectedAction: selectedAction,
-                  read_at:read_at
+                  selectedAction: selectedAction
                 };
               }
               return newCustomers;
             });
           }
+        },
+        (error) => {
+          console.error(`Error listening to message doc for room ${room.room_id}:`, error);
         }
-      });
-    }, (error) => {
-      console.error('Error listening to message collection:', error);
+        
+      );
+
+      unsubscribes.push(unsubscribe);
     });
 
     // クリーンアップ関数
-    return () => unsubscribe();
+    return () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe());
+    };
   }, [loginUserType, storedRooms]);
 
   //顧客ログイン時、担当者表示
@@ -167,27 +164,17 @@ const CustomerList = () => {
           >
             <div className="p-4">
               <div className="flex justify-between items-start mb-2">
-                <h2 className="text-base font-medium">
+                <h2 className="text-lg font-medium">
                   {customer.customer.customer_id + ' ' + customer.customer.customer_name}
                 </h2>
                 <span 
                   className={`px-2 py-1 rounded-full text-xs ${
-                    customer.selectedAction === 'collect'
-                      ? 'bg-green-100 text-green-800'
-                      : customer.selectedAction === 'recollect'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : customer.selectedAction === 'no-collect'
-                      ? 'bg-red-100 text-red-800'
+                    customer.status === 'online' 
+                      ? 'bg-green-100 text-green-800' 
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {customer.selectedAction === 'collect'
-                    ? '検体あり'
-                    : customer.selectedAction === 'recollect'
-                    ? '再集配あり'
-                    : customer.selectedAction === 'no-collect'
-                    ? '検体なし'
-                    : '未選択'}
+                  {customer.status === 'online' ? 'オンライン' : 'オフライン'}
                 </span>
               </div>
 
@@ -203,16 +190,6 @@ const CustomerList = () => {
                   </div>
                 </>
               )}
-
-                <span 
-                  className={`px-2 py-1 rounded-full text-xs flex justify-end  ${
-                    customer.read_at ? 'bg-green-100 text-green-800': customer.selectedAction ? 'bg-yellow-100 text-yellow-800' : ''}`}
-                >
-                  {customer.read_at ? '返信済み' : customer.selectedAction ? '未読': ''}
-                </span>
-
-
-
             </div>
           </div>
         ))}

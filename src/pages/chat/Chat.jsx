@@ -220,6 +220,7 @@ const Chat = () => {
             time: message.time,
             is_staff_read: true,
             read_at: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+            pickup_at:'',
           });
           console.log('メッセージをスタッフが既読したフラグを追加しました:', chatRoomId);
     
@@ -268,6 +269,7 @@ const Chat = () => {
         time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
         is_staff_read: false,
         read_at: '',
+        pickup_at:'',
       });
       console.log('メッセージを追加しました:', chatRoomId);
 
