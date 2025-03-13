@@ -6,10 +6,12 @@ import Chat from './pages/chat/Chat';
 import CourseList from './pages/course/CourseList';
 import Settings from './pages/settings/Settings';
 import Login from './pages/login/Login';
+import RegisterForm from './authservice/RegisterForm';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { changeLoginUserData } from './store/slice/loginUserDataSlice';
 import { getTodayDate } from './utils/dateUtils';
+import { AuthProvider } from './authservice/AuthContext';
 
 
 const ProtectedRoute = ({ isAuthenticated }) => {
@@ -64,8 +66,10 @@ const App = () => {
   return (
     <div>
       <BrowserRouter>
-        <Layout>
+        <AuthProvider>
           <Routes>
+            {/* Layoutを適用しないルート */}
+            <Route path="/register" element={<RegisterForm />} />
             <Route 
               path="/login" 
               element={
@@ -76,19 +80,22 @@ const App = () => {
                 )
               } 
             />
-
-            {/* <Route path="/" element={<CustomerList />} /> */}
-            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-              <Route path='/' element={<CustomerList />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/course" element={<CourseList />} />
-              <Route path="/settings" element={<Settings />} />
+            
+            {/* Layoutを適用するルート */}
+            <Route element={<Layout><Outlet /></Layout>}>
+              {/* 保護されたルート */}
+              <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+                <Route path='/' element={<CustomerList />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/course" element={<CourseList />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
             </Route>
+            
             <Route path="/" element={<Navigate to="/login" />} />
-            <Route path="*" element={<Navigate to="/login" />} />
-
+            {/* <Route path="*" element={<Navigate to="/login" />} /> */}
           </Routes>
-        </Layout>      
+        </AuthProvider>
       </BrowserRouter>   
     </div>
   );
