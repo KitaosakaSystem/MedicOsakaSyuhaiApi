@@ -29,7 +29,7 @@ const RegisterForm = () => {
       setLoading(true);
       await signup(customId, password);
       setSuccess(true);
-      setRegisteredId(customId);
+      //setRegisteredId(customId);
       setCustomId('');
       setPassword('');
     } catch (error) {
