@@ -7,6 +7,8 @@ import CourseList from './pages/course/CourseList';
 import Settings from './pages/settings/Settings';
 import Login from './pages/login/Login';
 import RegisterForm from './authservice/RegisterForm';
+import StaffRegisterForm from './StaffRegisterForm';
+import CustomerRegisterForm from './CustomerRegisterForm';
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { changeLoginUserData } from './store/slice/loginUserDataSlice';
@@ -69,7 +71,27 @@ const App = () => {
         <AuthProvider>
           <Routes>
             {/* Layoutを適用しないルート */}
-            <Route path="/register" element={<RegisterForm />} />
+            <Route path="/register" element={
+              isAuthenticated ? (
+                <RegisterForm />
+              ) : (
+                <Navigate to="/login" />
+              )
+            } />
+            <Route path="/staff_register" element={
+              isAuthenticated ? (
+                <StaffRegisterForm />
+              ) : (
+                <Navigate to="/login" />
+              )
+            } />
+            <Route path="/customer_register" element={
+              isAuthenticated ? (
+                <CustomerRegisterForm />
+              ) : (
+                <Navigate to="/login" />
+              )
+            } />
             <Route 
               path="/login" 
               element={
