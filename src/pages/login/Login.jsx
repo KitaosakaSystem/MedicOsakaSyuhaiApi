@@ -5,6 +5,7 @@ import { db } from '../../firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate} from 'react-router-dom';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
+import { useAuth } from '../../authservice/AuthContext';
 
 const Login = ({ onLoginSuccess }) => {
 
@@ -20,6 +21,8 @@ const Login = ({ onLoginSuccess }) => {
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
 
     const validateUser = async (userId, password, collectionName) => {
         const usersRef = collection(db, collectionName);
@@ -29,7 +32,7 @@ const Login = ({ onLoginSuccess }) => {
         if (querySnapshot.empty) {
           throw new Error('ユーザーIDが見つかりません');
         }
-    
+
         const userDoc = querySnapshot.docs[0];
         const userData = userDoc.data();
         // console.log(userDoc.data().name)
@@ -37,9 +40,9 @@ const Login = ({ onLoginSuccess }) => {
     
         // パスワードの検証
         // 注: 実際の実装では、パスワードはハッシュ化して保存・比較する必要があります
-        if (userData.password !== password) {
-          throw new Error('パスワードが正しくありません');
-        }
+        // if (userData.password !== password) {
+        //   throw new Error('パスワードが正しくありません');
+        // }
     
         return userData;
     };
@@ -47,23 +50,33 @@ const Login = ({ onLoginSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         // ログイン処理をここに実装
-         // Firestoreからユーザーを検索
-         try {
+        //Firebase Autentication　ログイン
+        try {
+            setError('');
+            setLoading(true);
+            await login(userId, password);
+        } catch (error) {
+            setError(error.message || 'ログインに失敗しました');
+            throw new Error('ログインに失敗しました')
+        }
+
+        // Firestoreからユーザーを検索
+        try {
             let userData;
             let userType;
-            
+        
             // ユーザーIDの桁数に応じてテーブルを切り替え
             if (userId.length === 4) {
-              // 4桁の場合はCustomerテーブルを参照
-              userData = await validateUser(userId, password, 'customer');
+                // 4桁の場合はCustomerテーブルを参照
+                userData = await validateUser(userId, password, 'customer');
             } else if (userId.length === 7) {
-              // 7桁の場合はstaffテーブルを参照
-              userData = await validateUser(userId, password, 'staff');
+                // 7桁の場合はstaffテーブルを参照
+                userData = await validateUser(userId, password, 'staff');
             } else {
-              setError('無効なユーザーIDです。4桁または7桁で入力してください。');
-              return;
+                setError('無効なユーザーIDです。4桁または7桁で入力してください。');
+                return;
             }
-      
+    
             // ログイン成功時の処理
             localStorage.setItem('userId', userId);
             localStorage.setItem('userName', userData.name);
@@ -76,21 +89,22 @@ const Login = ({ onLoginSuccess }) => {
             localStorage.setItem('isAuthenticated', 'true');
             
             dispatch(changeLoginUserData({userId:userId,
-                                          userName:userData.name, 
-                                          userType:userId.length === 4 ? 'customer' : 'staff',
-                                          kyotenId:userId.kyoten_id,
-                                          todayRouteId:''
+                                            userName:userData.name, 
+                                            userType:userId.length === 4 ? 'customer' : 'staff',
+                                            kyotenId:userId.kyoten_id,
+                                            todayRouteId:''
                                         }));   
             
             // ログイン成功後のリダイレクトなど
             // 例: window.location.href = '/dashboard';
             //navigate("/");
+            setLoading(false);
             onLoginSuccess();
-            console.log("推移"); 
-          } catch (error) {
+            console.log("推移");    
+        } catch (error) {
             console.error('ログインエラー:', error);
             setError(error.message || 'ログイン処理中にエラーが発生しました');
-          }
+        }
     };
 
     return (

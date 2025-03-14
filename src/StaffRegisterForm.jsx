@@ -23,7 +23,7 @@ const StaffRegisterForm = () => {
   // CSV一括登録のための状態
   const [csvFile, setCsvFile] = useState(null);
   const [csvProcessing, setCsvProcessing] = useState(false);
-  const [csvResults, setCsvResults] = useState({ success: 0, failed: 0, total: 0 });
+  const [csvResults, setCsvResults] = useState({ success: 0, updated: 0, failed: 0, total: 0 });
   const [csvLogs, setCsvLogs] = useState([]);
   const fileInputRef = useRef(null);
   
@@ -68,14 +68,11 @@ const StaffRegisterForm = () => {
       
       // Firestore用のスタッフデータを作成
       const staffData = {
-        userId: userId,
+        userid: userId,
         name: name,
         password: password,
         kyoten_id: kyotenId,
-        routes: filteredRoutes.reduce((obj, route, index) => {
-          obj[index] = route;
-          return obj;
-        }, {})
+        routes: filteredRoutes // 配列としてそのまま保存
       };
       
       // ドキュメントの存在確認
@@ -149,9 +146,23 @@ const StaffRegisterForm = () => {
     try {
       const buffer = await readFileAsBinary(csvFile);
       
-      // Shift-JISをデコードするための処理
-      const decoder = new TextDecoder('shift-jis');
-      const text = decoder.decode(buffer);
+      // エンコーディング検出とデコード
+      let text = '';
+      try {
+        // まずShift-JISでデコード試行
+        const shiftJisDecoder = new TextDecoder('shift-jis');
+        text = shiftJisDecoder.decode(buffer);
+      } catch (encodingError) {
+        try {
+          // Shift-JIS失敗の場合はISO-8859-1でデコード試行
+          const isoDecoder = new TextDecoder('iso-8859-1');
+          text = isoDecoder.decode(buffer);
+        } catch (isoError) {
+          // どちらも失敗した場合はUTF-8でデコード
+          const utf8Decoder = new TextDecoder('utf-8');
+          text = utf8Decoder.decode(buffer);
+        }
+      }
       
       Papa.parse(text, {
         header: true,
@@ -194,15 +205,6 @@ const StaffRegisterForm = () => {
             const password = row.password && row.password.trim();
             const kyotenId = row.kyoten_id && row.kyoten_id.trim();
             
-            // routes_0, routes_1, routes_2, ... などのカラムからルート情報を抽出
-            const routes = {};
-            Object.keys(row).forEach(key => {
-              if (key.startsWith('routes_') && row[key] && row[key].trim() !== '') {
-                const routeIndex = parseInt(key.split('_')[1]);
-                routes[routeIndex] = row[key].trim();
-              }
-            });
-            
             if (!userId || !name || !password || !kyotenId) {
               logs.push({ 
                 userId: userId || '(空)', 
@@ -214,6 +216,17 @@ const StaffRegisterForm = () => {
             }
             
             try {
+              // routes_0, routes_1, routes_2, ... などのカラムからルート情報を抽出
+              const routesArray = [];
+              
+              // routesの列を探して配列に追加
+              for (let i = 0; i < 10; i++) { // 最大10個のルートをサポート
+                const routeKey = `routes_${i}`;
+                if (row[routeKey] && row[routeKey].trim() !== '') {
+                  routesArray.push(row[routeKey].trim());
+                }
+              }
+              
               // ドキュメントの存在確認
               const docRef = doc(db, "staff", userId);
               const docSnap = await getDoc(docRef);
@@ -221,11 +234,11 @@ const StaffRegisterForm = () => {
             
               // Firestoreにスタッフデータを保存
               await setDoc(docRef, {
-                userId,
+                userid: userId,
                 name,
                 password,
                 kyoten_id: kyotenId,
-                routes
+                routes: routesArray // 配列として保存
               });
               
               // Firebase Authenticationにもユーザーを登録（上書きでない場合のみ）
@@ -458,7 +471,7 @@ const StaffRegisterForm = () => {
                 オプションカラム: routes_0, routes_1, routes_2, ...
               </p>
               <p className="mt-1 text-xs text-gray-700 font-medium">
-                注意: CSVファイルはShift-JISエンコードで保存してください
+                注意: CSVファイルはShift-JISまたはISO-8859-1エンコードで保存してください
               </p>
             </div>
             

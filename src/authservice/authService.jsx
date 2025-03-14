@@ -65,6 +65,8 @@ import {
   // ログイン - カスタムIDとパスワードを使用
   export const loginUser = async (customId, password) => {
     try {
+      console.log("authService|customId>",customId)
+      console.log("authService|password>",password)
       // カスタムIDからユーザー情報を直接取得
       const userDocRef = doc(db, "users", customId);
       const userDocSnap = await getDoc(userDocRef);
@@ -76,6 +78,8 @@ import {
       // ユーザーのメールアドレスを取得
       const userData = userDocSnap.data();
       const email = userData.email;
+
+      console.log("authService|email>",email)
       
       // Firebase Authでログイン
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -112,6 +116,7 @@ import {
       
       // カスタムIDを取得
       const { customId } = uidMapDocSnap.data();
+      console.log("uid>",uid)
       console.log("customid>",customId)
       
       // カスタムIDを使ってユーザー情報を取得
