@@ -8,6 +8,8 @@ import { addDoc, collection, doc, getDoc, query, serverTimestamp, setDoc, update
 import ToggleSwitch from '../../components/ToggleSwitch';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 import { getTodayDate } from '../../utils/dateUtils'
+import { useAuth } from '../../authservice/AuthContext';
+import { signOut } from '../../authservice/authService';
 
 
 const Settings = () => {
@@ -235,6 +237,7 @@ const Settings = () => {
     localStorage.setItem('chatRooms', '');
     localStorage.setItem('selectRouteIds','')
     localStorage.setItem('isAuthenticated', 'false');
+    signOut();
     window.location.reload();   
   };
 

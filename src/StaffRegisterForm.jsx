@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from './authservice/AuthContext';
+import { auth } from './firebase';
 
 const StaffRegisterForm = () => {
   // フォーム入力用の状態
@@ -54,6 +55,8 @@ const StaffRegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log("UID>",auth.userId)
+
     try {
       setError('');
       setLoading(true);
@@ -70,7 +73,6 @@ const StaffRegisterForm = () => {
       const staffData = {
         userid: userId,
         name: name,
-        password: password,
         kyoten_id: kyotenId,
         routes: filteredRoutes // 配列としてそのまま保存
       };
@@ -107,7 +109,7 @@ const StaffRegisterForm = () => {
       
     } catch (error) {
       console.error("Registration error:", error);
-      setError(error.message || 'スタッフ登録に失敗しました');
+      setError(error.message + 'スタッフ登録に失敗しました' || 'スタッフ登録に失敗しました');
     } finally {
       setLoading(false);
     }
@@ -236,7 +238,6 @@ const StaffRegisterForm = () => {
               await setDoc(docRef, {
                 userid: userId,
                 name,
-                password,
                 kyoten_id: kyotenId,
                 routes: routesArray // 配列として保存
               });
