@@ -133,7 +133,7 @@ const Settings = () => {
         };
 
         chatRooms.push(chatRoomData) //ローカルストレージ保管用に足していく
-        // console.log("chat_Data",chatRoomData);
+        console.log("chatRoomData>",chatRoomData);
         const docRef = doc(db, 'chat_rooms', loginUserId + '_' + schedule.customer_id);
         await setDoc(docRef, chatRoomData);
         console.log('チャットルームが作成されました:', docRef.id);

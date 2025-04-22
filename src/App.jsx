@@ -14,6 +14,7 @@ import { useDispatch } from 'react-redux';
 import { changeLoginUserData } from './store/slice/loginUserDataSlice';
 import { getTodayDate } from './utils/dateUtils';
 import { AuthProvider } from './authservice/AuthContext';
+import RouteUpdaterForm from './RouteUpdaterForm';
 
 
 const ProtectedRoute = ({ isAuthenticated }) => {
@@ -88,6 +89,13 @@ const App = () => {
             <Route path="/customer_register" element={
               isAuthenticated ? (
                 <CustomerRegisterForm />
+              ) : (
+                <Navigate to="/login" />
+              )
+            } />
+            <Route path="/route_register" element={
+              isAuthenticated ? (
+                <RouteUpdaterForm />
               ) : (
                 <Navigate to="/login" />
               )
