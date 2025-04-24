@@ -303,49 +303,56 @@ const getCustomerSchedule = async (documentId) => {
           </div>
           <div className="space-y-2">
             <label className="text-base font-medium text-gray-700">ユーザー名：</label>
-            <label className="text-base font-medium text-gray-700">{loginUserName}</label>
+            <label className="text-base font-medium text-gray-700">
+              {loginUserType === 'customer' ? `${loginUserName} 様` : loginUserName}
+            </label>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-base font-medium text-gray-700">本日の担当コース：</label>
-            <label className="text-base font-medium text-gray-700">{loginTodayRouteId}</label>
-          </div>
+          {loginUserType !== 'customer' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-base font-medium text-gray-700">本日の担当コース：</label>
+                <label className="text-base font-medium text-gray-700">{loginTodayRouteId}</label>
+              </div>
 
-          <div className="space-y-2">
-            <label className="text-base font-medium text-gray-700">担当コース</label>
-            <select
-              value={selectedCourse}
-              onChange={handleCourseChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">コースを選択</option>
-              {routeNames.map((route) => (
-                <option key={route.id} value={route.name}>
-                  {route.id}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="space-y-2">
+                <label className="text-base font-medium text-gray-700">担当コース</label>
+                <select
+                  value={selectedCourse}
+                  onChange={handleCourseChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">コースを選択</option>
+                  {routeNames.map((route) => (
+                    <option key={route.id} value={route.name}>
+                      {route.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* テキストボックスを追加 */}
-          <div className="space-y-2">
-            <label className="text-base font-medium text-gray-700">選択したコース</label>
-            <input
-              type="text"
-              value={routeTextInput}
-              onChange={(e) => setRouteTextInput(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="選択したコースが表示されます"
-            />
-          </div>
+              {/* テキストボックスを追加 */}
+              <div className="space-y-2">
+                <label className="text-base font-medium text-gray-700">選択したコース</label>
+                <input
+                  type="text"
+                  value={routeTextInput}
+                  onChange={(e) => setRouteTextInput(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="選択したコースが表示されます"
+                />
+              </div>
 
-          <div className="pt-4 space-y-4">
-            <button
-              onClick={handleSubmit}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              設定を保存
-            </button>
+              <div className="pt-4 space-y-4">
+                <button
+                  onClick={handleSubmit}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  設定を保存
+                </button>
+              </div>
+            </>
+          )}
 
             <div className="pt-12 border-t mt-8">
               <ToggleSwitch
@@ -367,7 +374,6 @@ const getCustomerSchedule = async (documentId) => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

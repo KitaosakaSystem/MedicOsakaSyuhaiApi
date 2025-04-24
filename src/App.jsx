@@ -40,6 +40,11 @@ const AdminSidebar = () => {
   // サイドバーのナビゲーション項目
   const navItems = [
     {
+      to: '/',
+      icon: '🏠',
+      text: 'Home'
+    },
+    {
       to: '/register',
       icon: '📋',
       text: '登録ホーム'

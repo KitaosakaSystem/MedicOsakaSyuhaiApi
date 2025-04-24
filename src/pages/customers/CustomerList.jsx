@@ -91,6 +91,57 @@ const CustomerList = () => {
     return () => unsubscribe();
   }, [loginUserType, storedRooms]);
 
+  // Firestoreから再集配情報を取得して顧客データを更新
+  useEffect(() => {
+    if (loginUserType === 'customer' || !storedRooms) {
+      return;
+    }
+
+    const fetchRePickupData = async () => {
+      try {
+        const parsedRooms = JSON.parse(storedRooms);
+        const roomIds = parsedRooms.map(room => room.room_id);
+        
+        for (const roomId of roomIds) {
+          // room_idからドキュメントを取得
+          const roomQuery = query(
+            collection(db, 'chat_rooms'),
+            where('room_id', '==', roomId)
+          );
+          
+          const roomSnapshot = await getDocs(roomQuery);
+          if (!roomSnapshot.empty) {
+            const roomData = roomSnapshot.docs[0].data();
+            const isRePickup = roomData.isRePickup || false;
+            
+            // 顧客データを更新
+            setCustomers(prevCustomers => {
+              const newCustomers = [...prevCustomers];
+              const customerIndex = newCustomers.findIndex(
+                customer => customer.customer_code === roomId
+              );
+              
+              if (customerIndex !== -1) {
+                newCustomers[customerIndex] = {
+                  ...newCustomers[customerIndex],
+                  customer: {
+                    ...newCustomers[customerIndex].customer,
+                    isRePickup: isRePickup
+                  }
+                }
+              }
+              return newCustomers;
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching rePickup data:', error);
+      }
+    };
+
+    fetchRePickupData();
+  }, [loginUserType, storedRooms]);
+
   //顧客ログイン時、担当者表示
   // データを更新する関数
   const updateCustomers = async () => {
@@ -137,7 +188,8 @@ const CustomerList = () => {
             address: '',
             phone: '',
             read_at: messagesMap[data.room_id]?.read_at || null,
-            selectedAction:  messagesMap[data.room_id]?.selectedAction || null
+            selectedAction: messagesMap[data.room_id]?.selectedAction || null,
+            isRePickup: data.isRePickup || false
           }
         };
       });
@@ -217,6 +269,27 @@ const CustomerList = () => {
             今日の担当コースを選択してください
           </p>
         )}
+        {customers.length === 0 && loginUserType === 'customer' && (
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-amber-800 font-medium mb-2 text-center">申し訳ございません</p>
+            <p className="text-gray-700 mb-4 text-center">
+              担当スタッフがまだコースの登録をしていないようです。<br />
+              お手数ですが、もとよりのラボまで電話で集配連絡をいただけますと幸いです。
+            </p>
+            <div className="flex items-center justify-center">
+              <img 
+                src="/images/sorry-corgi.jpg" 
+                alt="謝罪するコーギー" 
+                className="w-48 h-auto rounded"
+              />
+            </div>
+          </div>
+        )}
+        {customers.length === 0 && loginUserType === 'staff' && loginTodayRouteId && (
+          <div className="bg-white rounded-lg shadow p-4">
+            <p className="text-amber-800 font-medium">コース登録を忘れています</p>
+          </div>
+        )}
         {customers.map(customer => (
           <div 
             key={customer.customer.customer_id}
@@ -228,25 +301,32 @@ const CustomerList = () => {
                 <h2 className="text-base font-medium">
                   {customer.customer.customer_id + ' ' + customer.customer.customer_name}
                 </h2>
-                <span 
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    customer.customer.selectedAction === 'collect'
-                      ? 'bg-green-100 text-green-800'
+                <div className="flex items-center space-x-2">
+                  {customer.customer.isRePickup && (
+                    <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                      再集配
+                    </span>
+                  )}
+                  <span 
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      customer.customer.selectedAction === 'collect'
+                        ? 'bg-green-100 text-green-800'
+                        : customer.customer.selectedAction === 'recollect'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : customer.customer.selectedAction === 'no-collect'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {customer.customer.selectedAction === 'collect'
+                      ? '検体あり'
                       : customer.customer.selectedAction === 'recollect'
-                      ? 'bg-yellow-100 text-yellow-800'
+                      ? '再集配あり'
                       : customer.customer.selectedAction === 'no-collect'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {customer.customer.selectedAction === 'collect'
-                    ? '検体あり'
-                    : customer.customer.selectedAction === 'recollect'
-                    ? '再集配あり'
-                    : customer.customer.selectedAction === 'no-collect'
-                    ? '検体なし'
-                    : '未選択'}
-                </span>
+                      ? '検体なし'
+                      : '未選択'}
+                  </span>
+                </div>
               </div>
 
               {loginUserType === 'staff' && (
