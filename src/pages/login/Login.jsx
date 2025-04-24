@@ -120,6 +120,8 @@ const Login = ({ onLoginSuccess }) => {
         const usersRef = collection(db, collectionName);
         const q = query(usersRef, where('userid', '==', userId));
         const querySnapshot = await getDocs(q);
+
+        console.log("validateUser collectionName>",collectionName)
     
         if (querySnapshot.empty) {
           throw new Error('ユーザーIDが見つかりません');

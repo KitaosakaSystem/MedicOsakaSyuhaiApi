@@ -98,10 +98,12 @@ const CustomerList = () => {
       const today = new Date();
       const targetDate = today.toISOString().split('T')[0];
       
+      console.log("updateCustomers_loginUserId",loginUserId);
+      console.log("updateCustomers_targetDate>",targetDate);
       // chat_roomsの取得
       const chatRoomsQuery = query(
         collection(db, 'chat_rooms'),
-        where('customer_id', '==', loginUserId),
+        where('customer_id', '==', Number(loginUserId)),
         where('date', '==', targetDate)
       );
       const chatRoomsSnapshot = await getDocs(chatRoomsQuery);
@@ -125,11 +127,11 @@ const CustomerList = () => {
       const updatedCustomers = chatRoomsSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
-          id: doc.id,
+          id: data.staff_id,
           customer: {
-            id: doc.id,
+            id: data.staff_id,
             room_id: data.room_id,
-            customer_id: data.isRePickup ? '1' : '0',
+            customer_id: data.staff_id,
             customer_name: '(メディック)' + data.staff_name,
             staff_id: loginUserId,
             address: '',
@@ -157,9 +159,12 @@ const CustomerList = () => {
       const today = new Date();
       const targetDate = today.toISOString().split('T')[0];
       
+      console.log("loginUserId",loginUserId);
+      console.log("targetDate>",targetDate);
+
       const chatRoomsQuery = query(
         collection(db, 'chat_rooms'),
-        where('customer_id', '==', loginUserId),
+        where('customer_id', '==', Number(loginUserId)),
         where('date', '==', targetDate)
       );
 

@@ -50,27 +50,34 @@ const RouteUpdaterForm = () => {
       // ルートの更新（サンプルデータ）
       const docRef = doc(db, "pickup_routes", courseId);
       
-      // スケジュールデータの作成
-      const mondaySchedule = [
+      // スケジュールデータの作成（大阪府の住所を追加）
+      const customerSchedule = [
         {
           customer_id: "7998",
           isRePickup: false,
           name: "メディック",
-          order: 1
+          order: 1,
+          address: "大阪府大阪市北区梅田3-1-3",
+          phone: "06-1234-5678"
         },
         {
           customer_id: "8340",
           isRePickup: false,
           name: "牧野",
-          order: 2
+          order: 2,
+          address: "大阪府大阪市中央区心斎橋筋2-6-14",
+          phone: "06-8765-4321"
         }
       ];
       
-      // すべての曜日に同じスケジュールを適用
+      // 全曜日に同じスケジュールを適用
       const scheduleData = {
-        monday: mondaySchedule,
-        tuesday: mondaySchedule,
-        wednesday: mondaySchedule
+        monday: customerSchedule,
+        tuesday: customerSchedule,
+        wednesday: customerSchedule,
+        thursday: customerSchedule,
+        friday: customerSchedule,
+        saturday: customerSchedule
       };
       
       // データの更新（kyoten_idを数値型で保存）
@@ -146,7 +153,7 @@ const RouteUpdaterForm = () => {
           
           // ヘッダーチェック
           const firstRow = data[0];
-          const requiredFields = ['course_id', 'customer_code', 'customer_name', 'kyoten_code'];
+          const requiredFields = ['course_id', 'customer_code', 'customer_name', 'kyoten_code', 'delivery_order'];
           const missingFields = requiredFields.filter(field => !firstRow.hasOwnProperty(field));
           
           if (missingFields.length > 0) {
@@ -214,12 +221,18 @@ const RouteUpdaterForm = () => {
               };
             }
             
+            // delivery_order を使用してorderフィールドを設定
+            // 値が存在しない場合はデフォルト値として0を使用
+            const orderValue = row.delivery_order !== undefined && row.delivery_order !== null
+              ? parseInt(row.delivery_order)
+              : 0;
+            
             // 顧客データを作成（アドレスフィールドを含む）
             const customerData = {
               customer_id: row.customer_code,
               name: row.customer_name,
               isRePickup: row.saisyuhai_flag === 1, // 数値型に変換されているので === 1 で比較
-              order: parseInt(row.start_date || "0"),
+              order: orderValue,  // start_dateの代わりにdelivery_orderを使用
               phone: row.phone || "", // CSVにphone列がある場合はそれを使用、なければ空白
               address: row.address || "" // CSVにaddress列がある場合はそれを使用、なければ空白
             };
@@ -276,6 +289,12 @@ const RouteUpdaterForm = () => {
             try {
               const pickupRouteRef = doc(db, "pickup_routes", courseId);
               
+              // 曜日ごとにデータを並べ替え
+              for (const day in courseData[courseId].schedule) {
+                // orderフィールドに基づいて昇順にソート
+                courseData[courseId].schedule[day].sort((a, b) => a.order - b.order);
+              }
+              
               // kyoten_idと一緒にスケジュール情報を更新
               await setDoc(pickupRouteRef, {
                 kyoten_id: courseData[courseId].kyoten_id,
@@ -301,7 +320,7 @@ const RouteUpdaterForm = () => {
           setCsvResults({
             success: successCount,
             failed: failedCount,
-            total: Object.keys(courseSchedules).length + 1 // ルート情報 + 各コース
+            total: Object.keys(courseData).length + 1 // ルート情報 + 各コース
           });
           setCsvLogs(logs);
           
@@ -435,7 +454,7 @@ const RouteUpdaterForm = () => {
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-xs text-gray-500">
-                必須カラム: course_id, customer_code, customer_name, kyoten_code
+                必須カラム: course_id, customer_code, customer_name, kyoten_code, delivery_order
               </p>
               <p className="mt-1 text-xs text-gray-500">
                 曜日フラグ: monday_flag, tuesday_flag, wednesday_flag, thursday_flag, friday_flag, saturday_flag
@@ -452,8 +471,10 @@ const RouteUpdaterForm = () => {
               <h4 className="text-sm font-medium text-yellow-800 mb-2">重要な処理内容</h4>
               <ul className="list-disc pl-5 text-xs text-yellow-700 space-y-1">
                 <li>CSVファイルの kyoten_code 値は数値型の kyoten_id としてFirestoreに保存されます</li>
+                <li>CSVファイルの delivery_order 値は顧客データの order フィールドとして保存されます</li>
                 <li>各コースは拠点コードに基づいてグループ化され、routes/ドキュメントに追加されます</li>
-                <li>各コースのスケジュールは pickup_routes/ドキュメントに保存されます</li>
+                <li>各コースのスケジュールは pickup_routes/ ドキュメントに保存されます</li>
+                <li>各曜日のスケジュールは order フィールドに基づいて昇順にソートされます</li>
                 <li>CSVファイルに address フィールドがある場合、その値が各曜日のスケジュールの顧客データに保存されます</li>
                 <li>CSVファイルに phone フィールドがある場合、その値も各曜日のスケジュールの顧客データに保存されます</li>
               </ul>

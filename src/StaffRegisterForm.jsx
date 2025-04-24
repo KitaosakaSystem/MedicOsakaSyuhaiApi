@@ -347,7 +347,7 @@ const StaffRegisterForm = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="例: シズ：福井一真"
+                placeholder="例: シス：福井一真"
               />
             </div>
             
@@ -363,7 +363,7 @@ const StaffRegisterForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="例: 59078769"
+                placeholder="例: 8桁以上のホストのパスワード"
               />
             </div>
             

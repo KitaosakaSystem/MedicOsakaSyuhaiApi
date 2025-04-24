@@ -48,7 +48,7 @@ const CustomerRegisterForm = () => {
       
       // Firestore用の顧客データを作成
       const customerData = {
-        userId: customerId,
+        userid: customerId,
         name: name,
         password: password,
         address: address,
@@ -193,7 +193,7 @@ const CustomerRegisterForm = () => {
             
               // Firestoreに顧客データを保存
               await setDoc(docRef, {
-                userId: customerId,
+                userid: customerId,
                 name,
                 password,
                 address: address || '',

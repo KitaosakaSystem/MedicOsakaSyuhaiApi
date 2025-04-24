@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
 import { db } from '../../firebase';
-import { addDoc, collection, doc, getDoc, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, deleteDoc, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 import { getTodayDate } from '../../utils/dateUtils'
@@ -35,6 +35,12 @@ const Settings = () => {
   const [chatRooms, setChatRooms] = useState([]);
   // 選択されたコースをテキストボックスに表示するための状態
   const [routeTextInput, setRouteTextInput] = useState("");
+
+  const getCurrentDayOfWeek = () => {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDate = new Date();
+    return days[currentDate.getDay()]; // 0 (日曜日) から 6 (土曜日) の数値を返すので、それをインデックスとして使用
+  };
 
   useEffect(() => {
 
@@ -115,73 +121,113 @@ const Settings = () => {
     }
   };
 
-   // チャットルーム作成
-  const createChatRoom = async (routeId,schedule,chatRooms) => {
-    try {
-        const chatRoomData = {
-            room_id: loginUserId + '_' + schedule.customer_id,
-            customer_id: schedule.customer_id,
-            customer_name: schedule.name,
-            staff_id: loginUserId,
-            staff_name: loginUserName,
-            pickup_status: "1",
-            isRePickup:schedule.isRePickup ,
-            address:schedule.address,
-            phone:schedule.phone,
-            date: new Date().toISOString().split('T')[0],
-            created_at: serverTimestamp(),
-        };
+  // チャットルーム作成
+const createChatRoom = async (routeId, schedule, chatRooms) => {
+  try {
+    // Document ID to be created
+    const newDocId = loginUserId + '_' + schedule.customer_id;
+    
+    // First, check if a document with the same staff_id exists and delete it
+    const chatRoomsCollection = collection(db, 'chat_rooms');
+    const q = query(chatRoomsCollection, where("staff_id", "==", loginUserId));
+    
+    // Get all documents where staff_id matches loginUserId
+    const querySnapshot = await getDocs(q);
+    
+    // Delete each matching document
+    const deletePromises = [];
+    querySnapshot.forEach((document) => {
+      //console.log("To Delete document.id",document.id)
+      const docRef = doc(db, 'chat_rooms', document.id);
+      deletePromises.push(deleteDoc(docRef));
+      console.log('Deleting existing chat room:', document.id);
+    });
+    
+    // Wait for all deletions to complete
+    await Promise.all(deletePromises);
+    
+    // Now create the new chat room
+    const chatRoomData = {
+      room_id: newDocId,
+      customer_id: schedule.customer_id,
+      customer_name: schedule.name,
+      staff_id: loginUserId,
+      staff_name: loginUserName,
+      pickup_status: "1",
+      isRePickup: schedule.isRePickup,
+      address: schedule.address,
+      phone: schedule.phone,
+      date: new Date().toISOString().split('T')[0],
+      created_at: serverTimestamp(),
+    };
 
-        chatRooms.push(chatRoomData) //ローカルストレージ保管用に足していく
-        console.log("chatRoomData>",chatRoomData);
-        const docRef = doc(db, 'chat_rooms', loginUserId + '_' + schedule.customer_id);
-        await setDoc(docRef, chatRoomData);
-        console.log('チャットルームが作成されました:', docRef.id);
+    chatRooms.push(chatRoomData); // ローカルストレージ保管用に足していく
+    console.log("chatRoomData>", chatRoomData);
+    
+    const docRef = doc(db, 'chat_rooms', newDocId);
+    await setDoc(docRef, chatRoomData);
+    console.log('チャットルームが作成されました:', docRef.id);
 
-    } catch (error) {
-        console.error('エラーが発生しました:', error);
-    }
-  };
+    return chatRoomData; // 作成したデータを返す
 
-  //　当日割り当てコースマスター取得
-  const getCustomerSchedule = async (documentId) => {
-    try {
-      const docRef = doc(db, 'pickup_routes', documentId);
-      const docSnap = await getDoc(docRef);
-  
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        // console.log("Doc.Data()やでー",data)
-        const mondaySchedule = data.schedule.monday;
-        const chatRooms = [];
+  } catch (error) {
+    console.error('エラーが発生しました:', error);
+    throw error; // エラーを伝播させる
+  }
+};
 
-        mondaySchedule.forEach((schedule, index) => {
-          console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + schedule.name  + " " + schedule.order);
-          createChatRoom(documentId,schedule,chatRooms)          
-        });
+  // 当日割り当てコースマスター取得
+const getCustomerSchedule = async (documentId) => {
+  try {
+    const docRef = doc(db, 'pickup_routes', documentId);
+    const docSnap = await getDoc(docRef);
 
-        //ローカルストレージに保管しておく
-        // console.log("ChaaaaatRoooooooooooms",chatRooms);
-        localStorage.setItem('chatRooms', JSON.stringify(chatRooms));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // 現在の曜日を取得
+      const currentDay = getCurrentDayOfWeek();
+      console.log("本日の曜日>",currentDay);
+      // data.schedule[currentDay]で実行時の曜日に対応するスケジュールを取得
+      const todaySchedule = data.schedule[currentDay];
+      const chatRooms = [];
 
-        //コースマスター登録
-        const newStaffData = {
-          staff_id: loginUserId,
-          staff_name: loginUserName,
-          login_date: new Date().toISOString().split('T')[0]
-        };
-        updateOrCreateStaffData(data.kyoten_id,documentId,newStaffData);
-
-        return mondaySchedule;
-      } else {
-        console.log('Document not found');
+      if (!todaySchedule) {
+        console.log(`本日(${currentDay})のスケジュールがありません`);
         return null;
       }
-    } catch (error) {
-      console.error('Error:', error);
+
+      // すべてのcreateRoomの処理が完了するのを待つ
+      const createRoomPromises = todaySchedule.map((schedule, index) => {
+        console.log(`For Each Schedule ${index + 1}:`, schedule.customer_id + schedule.name + " " + schedule.order);
+        // createChatRoomの戻り値（Promise）を返す
+        return createChatRoom(documentId, schedule, chatRooms);
+      });
+
+      // すべての処理が完了するのを待つ
+      await Promise.all(createRoomPromises);
+
+      // すべてのチャットルーム作成が完了してからlocalStorageに保存
+      console.log("Add LocalStorage ChatRooms", chatRooms);
+      localStorage.setItem('chatRooms', JSON.stringify(chatRooms));
+
+      // コースマスター登録
+      const newStaffData = {
+        staff_id: loginUserId,
+        staff_name: loginUserName,
+        login_date: new Date().toISOString().split('T')[0]
+      };
+      updateOrCreateStaffData(data.kyoten_id, documentId, newStaffData);
+
+      return todaySchedule;
+    } else {
+      console.log('Document not found');
       return null;
     }
-  };
+  } catch (error) {
+    console.error('Error:', error);
+    return null;
+  }
+};
 
   // 設定の状態管理---------------------------------------------------------------------
   const [customers,setCustomers] = useState([]);
@@ -221,6 +267,7 @@ const Settings = () => {
       userType:loginUserType,
       todayRouteId:routeTextInput}))
 
+    console.log("Delete LocalStorage ChatRooms");
     localStorage.setItem('chatRooms', '');
 
     //曜日ごとのコース一覧を読んでチャットルーム立てる
