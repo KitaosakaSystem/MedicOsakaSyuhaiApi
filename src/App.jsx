@@ -16,6 +16,7 @@ import { getTodayDate } from './utils/dateUtils';
 import { AuthProvider } from './authservice/AuthContext';
 import RouteUpdaterForm from './RouteUpdaterForm';
 import RoutePrintComponent from './RoutePrintComponent';
+import FCMTestPage from './FcmTestPage';
 
 // サイドバーのナビゲーション項目コンポーネント
 const NavItem = ({ to, icon, text, isActive }) => (
@@ -68,7 +69,13 @@ const AdminSidebar = () => {
       to: '/route_print',
       icon: '🖨️',
       text: 'コース確認表'
+    },
+    {
+      to: '/fcm_test',
+      icon: '📨',
+      text: 'FCM通知テスト'
     }
+    
   ];
   
   return (
@@ -179,6 +186,7 @@ const App = () => {
               <Route path="/customer_register" element={<CustomerRegisterForm />} />
               <Route path="/route_register" element={<RouteUpdaterForm />} />
               <Route path="/route_print" element={<RoutePrintComponent />} />
+              <Route path="/fcm_test"  element={<FCMTestPage />} />
             </Route>
             
             {/* メインアプリ用ルート - 既存レイアウト */}

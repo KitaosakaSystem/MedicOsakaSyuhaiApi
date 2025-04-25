@@ -10,6 +10,8 @@ import { changeLoginUserData } from '../../store/slice/loginUserDataSlice';
 import { getTodayDate } from '../../utils/dateUtils'
 import { useAuth } from '../../authservice/AuthContext';
 import { signOut } from '../../authservice/authService';
+import { getMessaging, getToken } from 'firebase/messaging';
+import { app } from '../../firebase'; // firebaseの初期化インスタンスをインポート
 
 
 const Settings = () => {
@@ -94,7 +96,6 @@ const Settings = () => {
   },[])
 
 
-  //console.log("loginName",loginName);
 
   //ルートマスター割り当て
   const updateOrCreateStaffData = async (documentId, fieldName, staffData) => {
@@ -288,6 +289,50 @@ const getCustomerSchedule = async (documentId) => {
     window.location.reload();   
   };
 
+  // 通知許可とFCMトークン取得
+  const handleNotificationPermission = async () => {
+    try {
+      // 通知許可をリクエスト
+      const permission = await Notification.requestPermission();
+      
+      if (permission === 'granted') {
+        console.log('通知が許可されました');
+        
+        // FCMメッセージングオブジェクトを取得
+        const messaging = getMessaging(app);
+        
+        // FCMトークンを取得
+        const token = await getToken(messaging, { 
+          vapidKey:import.meta.env.VITE_APP_FIREBASE_VAPID_KEY
+        });
+        
+        if (token) {
+          console.log('FCMトークン取得成功:', token);
+          
+          // usersコレクションにトークンを保存
+          const userCollectionName = loginUserType === 'customer' ? 'customer' : 'staff';
+          const userDocRef = doc(db, userCollectionName, loginUserId);
+          await updateDoc(userDocRef, {
+            fcmToken: token,
+            tokenUpdatedAt: serverTimestamp()
+          });
+          
+          console.log('FCMトークンをFirestoreに保存しました');
+          alert('通知の設定が完了しました');
+        } else {
+          console.log('FCMトークンの取得に失敗しました');
+          alert('通知の設定に失敗しました。もう一度お試しください。');
+        }
+      } else {
+        console.log('通知が拒否されました');
+        alert('通知が拒否されました。ブラウザの設定から通知を許可してください。');
+      }
+    } catch (error) {
+      console.error('通知設定エラー:', error);
+      alert('通知の設定中にエラーが発生しました。');
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -359,6 +404,15 @@ const getCustomerSchedule = async (documentId) => {
                 label="ボトムメニューマージン有効"
                 onChange={handleBottomMarginChange}
               />
+            </div>
+
+            <div className="pt-4">
+              <button
+                onClick={handleNotificationPermission}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                通知を許可する
+              </button>
             </div>
 
             

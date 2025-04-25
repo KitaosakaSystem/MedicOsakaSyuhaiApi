@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getMessaging } from 'firebase/messaging';
 
 // Your web app's Firebase configuration
 // console.log("api", import.meta.env.VITE_FIREBASE_API_KEY);
@@ -19,4 +20,10 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-export { auth, db, provider };
+// Messagingの初期化（ブラウザ環境の場合のみ）
+let messaging = null;
+if (typeof window !== 'undefined' && 'Notification' in window) {
+  messaging = getMessaging(app);
+}
+
+export { app,auth, db, provider,messaging };
