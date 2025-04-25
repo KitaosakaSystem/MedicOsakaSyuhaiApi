@@ -24,6 +24,13 @@ const CustomerList = () => {
     dispatch(changeText(loginTodayRouteId + 'コース　顧客一覧'))
   }, [])
 
+  const getDateMMdd = () => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return month + day;
+  };
+
   const [customers, setCustomers] = useState([]);
   const storedRooms = localStorage.getItem('chatRooms');
 
@@ -44,8 +51,11 @@ const CustomerList = () => {
     setCustomers(initialCustomers);
 
     // messageコレクションの変更を監視
-    const q = query(collection(db, 'messages'));
-    
+    const currentDate = getDateMMdd();  // 現在の日付をMMdd形式で取得
+    const q = query(
+      collection(db, 'messages'),
+      where('date', '==', currentDate)  // 日付フィルターを追加
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added' || change.type === 'modified') {
@@ -148,7 +158,8 @@ const CustomerList = () => {
     try {
       const today = new Date();
       const targetDate = today.toISOString().split('T')[0];
-      
+      const currentDate = getDateMMdd();  // 現在の日付をMMdd形式で取得
+
       console.log("updateCustomers_loginUserId",loginUserId);
       console.log("updateCustomers_targetDate>",targetDate);
       // chat_roomsの取得
@@ -159,8 +170,13 @@ const CustomerList = () => {
       );
       const chatRoomsSnapshot = await getDocs(chatRoomsQuery);
       
-      // messagesの取得
-      const messagesSnapshot = await getDocs(collection(db, 'messages'),where('customer_id', '==', loginUserId));
+       // messagesの取得（日付フィルターを追加）
+      const messagesQuery = query(
+        collection(db, 'messages'),
+        where('customer_id', '==', loginUserId),
+        where('date', '==', currentDate)  // 日付フィルターを追加
+      );
+      const messagesSnapshot = await getDocs(messagesQuery);
       
       // messagesデータをroom_idでマップ化
       const messagesMap = {};

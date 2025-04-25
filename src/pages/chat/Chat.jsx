@@ -32,6 +32,13 @@ const Chat = () => {
     dispatch(changeText('(' + chatPartnerId + ')' + chatPartnerName))
   })
 
+  const getDateMMdd = () => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return month + day;
+  };
+
   // const [messages, setMessages] = useState([
   //   { id: 1, text: '集配予定を確認いたします', time: '14:20', isCustomer: false },
   //   { id: 2, text: '検体あり', time: '14:21', isCustomer: true },
@@ -44,14 +51,14 @@ const Chat = () => {
   useEffect(() => {
     // messagesコレクションへの参照を作成
     const messagesRef = collection(db, 'messages');
-    
-    // クエリの作成
-    // room_idが一致し、送信時刻でソート
+     // 現在の日付をMMdd形式で取得
+    const currentDate = getDateMMdd();
+  
+    // クエリの作成 // room_idが一致
     const q = query(
       messagesRef,
-      where('room_id', '==', chatRoomId)
-      // orderBy('time', 'asc'),
-      // limitToLast(20)
+      where('room_id', '==', chatRoomId),
+      where('date', '==', currentDate)
     );
 
     // リアルタイムリスナーの設定
@@ -214,13 +221,14 @@ const Chat = () => {
           const docRefStaff = await setDoc(messageDocStaff, {
             room_id: message.room_id,
             sender_id: message.sender_id,
-            isCustomer: message.isCustomer, // loginUserTypeが'customer'の場合、trueを設定,
+            isCustomer: message.isCustomer,
             text: message.text,
-            selectedAction:message.selectedAction,
+            selectedAction: message.selectedAction,
             time: message.time,
             is_staff_read: true,
             read_at: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-            pickup_at:'',
+            pickup_at: '',
+            date: getDateMMdd() // 追加
           });
           console.log('メッセージをスタッフが既読したフラグを追加しました:', chatRoomId);
     
@@ -263,13 +271,14 @@ const Chat = () => {
       const docRef = await setDoc(messageDoc, {
         room_id: chatRoomId,
         sender_id: loginUserId,
-        isCustomer: loginUserType === 'customer', // loginUserTypeが'customer'の場合、trueを設定,
+        isCustomer: loginUserType === 'customer',
         text: messageText,
-        selectedAction:selectedAction,
+        selectedAction: selectedAction,
         time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
         is_staff_read: false,
         read_at: '',
-        pickup_at:'',
+        pickup_at: '',
+        date: getDateMMdd() // 追加
       });
       console.log('メッセージを追加しました:', chatRoomId);
 
