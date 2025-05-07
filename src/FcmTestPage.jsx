@@ -14,9 +14,9 @@ const FCMTestPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Google App ScriptのURL（実際のIDに置き換えてください）
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbyp9SBtFJuPija45FB2rffvUs_Y6SIw9DhB6DRWzSGRL5bH4dz9Q9e5CFuCEAr2O3_ybg/exec';
-
+  // Google App ScriptのURL（実際のデプロイメントIDに置き換えてください）
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzkWbhXgyaEJNCvsv9C-X0vWHqlcmGJpgYUxJ2hXMwTp1KyMhvLaAbWxrbcY_C6ODE7wA/exec';
+//
   // FCMトークンを取得
   const fetchFCMToken = async () => {
     if (!documentId) {
@@ -65,30 +65,39 @@ const FCMTestPage = () => {
     setSuccess('');
 
     try {
-      // Google App ScriptにPOSTリクエストを送信
+      // GASに送信するデータをプレーンテキストとして準備
+      const requestData = {
+        action: 'sendNotification',
+        messageId: `test-${Date.now()}`,
+        senderId: senderId,
+        receiverId: documentId,
+        messageText: message.body,
+        customTitle: message.title,
+        customBody: message.body,
+        targetToken: fcmToken
+      };
+
+      // text/plainとしてJSONを送信
       const response = await fetch(GAS_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({
-          action: 'sendNotification',
-          messageId: `test-${Date.now()}`, // テスト用のメッセージID
-          senderId: senderId,
-          receiverId: documentId,
-          messageText: message.body,
-          // カスタムオーバーライド用に追加
-          customTitle: message.title,
-          customBody: message.body,
-          targetToken: fcmToken
-        })
+        body: JSON.stringify(requestData)
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // レスポンスのテキストを取得
+      const responseText = await response.text();
+      
+      // テキストをJSONとしてパース
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response:', responseText);
+        throw new Error('サーバーからの応答を解析できませんでした');
       }
 
-      const data = await response.json();
       console.log('GAS response:', data);
 
       if (data.success) {
