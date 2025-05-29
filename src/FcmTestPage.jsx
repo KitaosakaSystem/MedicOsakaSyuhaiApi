@@ -14,9 +14,11 @@ const FCMTestPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Google App ScriptのURL（実際のデプロイメントIDに置き換えてください）
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzkWbhXgyaEJNCvsv9C-X0vWHqlcmGJpgYUxJ2hXMwTp1KyMhvLaAbWxrbcY_C6ODE7wA/exec';
-//
+  // Google App ScriptのURL　
+  // https://script.google.com/macros/s/AKfycbyeBI7suiUySIzsvBRccy_FbEnZcIVnrCCjK3vBerbSJVYC2m8McLwAcVWCLh9TIwqgJw/exec
+  // https://script.google.com/macros/s/AKfycbyeBI7suiUySIzsvBRccy_FbEnZcIVnrCCjK3vBerbSJVYC2m8McLwAcVWCLh9TIwqgJw/exec
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbyeBI7suiUySIzsvBRccy_FbEnZcIVnrCCjK3vBerbSJVYC2m8McLwAcVWCLh9TIwqgJw/exec';
+
   // FCMトークンを取得
   const fetchFCMToken = async () => {
     if (!documentId) {
@@ -65,29 +67,34 @@ const FCMTestPage = () => {
     setSuccess('');
 
     try {
-      // GASに送信するデータをプレーンテキストとして準備
-      const requestData = {
-        action: 'sendNotification',
-        messageId: `test-${Date.now()}`,
-        senderId: senderId,
-        receiverId: documentId,
-        messageText: message.body,
-        customTitle: message.title,
-        customBody: message.body,
-        targetToken: fcmToken
-      };
+      // URLSearchParamsを使用してform-dataを作成
+      const formData = new URLSearchParams();
+      formData.append('action', 'sendNotification');
+      formData.append('messageId', `test-${Date.now()}`);
+      formData.append('senderId', senderId);
+      formData.append('receiverId', documentId);
+      formData.append('messageText', message.body);
+      formData.append('customTitle', message.title);
+      formData.append('customBody', message.body);
+      formData.append('targetToken', fcmToken);
 
-      // text/plainとしてJSONを送信
+      console.log('Sending request to GAS:', formData.toString());
+
+      // application/x-www-form-urlencodedとして送信
       const response = await fetch(GAS_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(requestData)
+        body: formData.toString()
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
       // レスポンスのテキストを取得
       const responseText = await response.text();
+      console.log('Response text:', responseText);
       
       // テキストをJSONとしてパース
       let data;
@@ -95,7 +102,7 @@ const FCMTestPage = () => {
         data = JSON.parse(responseText);
       } catch (e) {
         console.error('Failed to parse response:', responseText);
-        throw new Error('サーバーからの応答を解析できませんでした');
+        throw new Error(`サーバーからの応答を解析できませんでした: ${responseText}`);
       }
 
       console.log('GAS response:', data);
@@ -116,7 +123,7 @@ const FCMTestPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6">FCM テスト通知 (Google App Script経由)</h1>
+        <h1 className="text-2xl font-bold mb-6">FCM テスト通知 (修正版)</h1>
         
         {/* ドキュメントID入力 */}
         <div className="mb-6">
@@ -200,7 +207,7 @@ const FCMTestPage = () => {
           disabled={loading || !fcmToken}
           className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400"
         >
-          {loading ? '送信中...' : 'テスト通知を送信 (GAS経由)'}
+          {loading ? '送信中...' : 'テスト通知を送信 (修正版)'}
         </button>
 
         {/* エラーメッセージ */}
@@ -219,12 +226,12 @@ const FCMTestPage = () => {
 
         {/* 注意事項 */}
         <div className="mt-6 p-4 bg-yellow-50 rounded-md">
-          <h3 className="text-sm font-medium text-yellow-800 mb-2">注意事項:</h3>
+          <h3 className="text-sm font-medium text-yellow-800 mb-2">修正内容:</h3>
           <ul className="text-sm text-yellow-700 list-disc list-inside">
-            <li>このテスト機能はGoogle App Scriptを利用して通知を送信します</li>
-            <li>Google App Scriptのデプロイメントが必要です</li>
-            <li>GAS側でCORSの設定が必要です</li>
-            <li>本番環境では適切な認証とセキュリティ対策が必要です</li>
+            <li>Content-Typeを application/x-www-form-urlencoded に変更</li>
+            <li>URLSearchParamsを使用してform-dataを作成</li>
+            <li>GAS側でCORSヘッダーを適切に設定</li>
+            <li>レスポンス処理を改善</li>
           </ul>
         </div>
 
