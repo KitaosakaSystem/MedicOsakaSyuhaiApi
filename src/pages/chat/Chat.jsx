@@ -6,11 +6,14 @@ import ActionButtons from '../../components/chat/ActionButtons';
 import { useDispatch } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { useSelector } from 'react-redux';
-import { addDoc, collection, doc, limit, limitToLast, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, limit, limitToLast, onSnapshot, orderBy, query, setDoc, where, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 const MAX_HOURLY_MESSAGES = 5;
 const STORAGE_KEY = 'roomMessageCounts';
+
+// Google App ScriptのURL
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyeBI7suiUySIzsvBRccy_FbEnZcIVnrCCjK3vBerbSJVYC2m8McLwAcVWCLh9TIwqgJw/exec';
 
 const Chat = () => {
 
@@ -21,6 +24,10 @@ const Chat = () => {
   const chatRoomId =  useSelector(state => state.chatUserData.chatRoomId);
   const loginUserId = useSelector(state => state.loginUserData.loginUserId);
   const loginUserType = useSelector(state => state.loginUserData.loginUserType);
+
+  // FCM通知の状態管理
+  const [fcmLoading, setFcmLoading] = useState(false);
+  const [fcmError, setFcmError] = useState('');
 
   // actionを操作するための関数取得
   const dispatch = useDispatch();
@@ -38,12 +45,6 @@ const Chat = () => {
     const day = String(now.getDate()).padStart(2, '0');
     return month + day;
   };
-
-  // const [messages, setMessages] = useState([
-  //   { id: 1, text: '集配予定を確認いたします', time: '14:20', isCustomer: false },
-  //   { id: 2, text: '検体あり', time: '14:21', isCustomer: true },
-  //   { id: 3, text: '承知いたしました。回収に向かいます。', time: '14:22', isCustomer: false }
-  // ]);
 
   //--------------------------------------------------------------------------------------------------------
   const [messages, setMessages] = useState([]);
@@ -86,11 +87,6 @@ const Chat = () => {
           // 既存のメッセージ配列から該当のメッセージを更新
           setMessages([]);
           setMessages(prevMessages => [...prevMessages, updatedMessage]);
-          // setMessages(prevMessages => 
-          //   prevMessages.map(message => 
-          //     message.id === updatedMessage.id ? updatedMessage : message
-          //   )
-          // );
         }
 
         if(change.doc.data().read_at !== ''){
@@ -113,14 +109,11 @@ const Chat = () => {
           };
           setMessages(prevMessages => [...prevMessages, newMessage]);
         }
-        
-
       });
     }, (error) => {
       console.error('Error listening to messages:', error);
     });
 
-    //console.log("メッセージ", messages);
     // コンポーネントのクリーンアップ時にリスナーを解除
     return () => unsubscribe();
   }, [chatRoomId]); // roomIdが変更されたときにリスナーを再設定
@@ -174,6 +167,142 @@ const Chat = () => {
   };
   // roomMessageCount--------------------------------------------------------------------------------------------------------------------------------------------------
 
+  // FCM通知送信関数（エラー修正版）
+  const sendFCMNotification = async (recipientId, messageText, selectedAction) => {
+    setFcmLoading(true);
+    setFcmError('');
+
+    try {
+      // 1. recipientIdの型チェックと文字列変換
+      console.log('FCM送信対象:', {
+        recipientId: recipientId,
+        recipientType: typeof recipientId,
+        recipientValue: recipientId
+      });
+
+      if (!recipientId) {
+        throw new Error('受信者IDが指定されていません');
+      }
+
+      // 数値の場合は文字列に変換、文字列でない場合はStringで変換
+      const recipientIdStr = String(recipientId);
+      
+      if (!recipientIdStr || recipientIdStr === 'null' || recipientIdStr === 'undefined') {
+        throw new Error('有効な受信者IDが指定されていません');
+      }
+
+      // 2. 受信者のFCMトークンを取得（改良版）
+      let collectionName;
+      
+      // IDの長さで判定（4桁なら顧客、7桁ならスタッフ）
+      if (recipientIdStr.length === 4) {
+        collectionName = 'customer';
+      } else if (recipientIdStr.length === 7) {
+        collectionName = 'staff';
+      } else {
+        // 長さで判定できない場合はloginUserTypeから逆算
+        if (loginUserType === 'customer') {
+          collectionName = 'staff'; // 顧客がログインしている場合、受信者はスタッフ
+        } else {
+          collectionName = 'customer'; // スタッフがログインしている場合、受信者は顧客
+        }
+        console.log(`IDの長さが不明(${recipientIdStr.length})なため、ログインユーザー種別から推測: ${collectionName}`);
+      }
+
+      console.log(`受信者情報: ID=${recipientIdStr}, Collection=${collectionName}`);
+
+      const docRef = doc(db, collectionName, recipientIdStr);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        throw new Error(`${collectionName}コレクションにユーザー(${recipientIdStr})が見つかりません`);
+      }
+
+      const userData = docSnap.data();
+      const fcmToken = userData.fcmToken;
+      
+      if (!fcmToken) {
+        console.warn(`受信者(${recipientIdStr})のFCMトークンが設定されていません`);
+        setFcmError('受信者の通知設定が未完了のため、通知は送信されませんでした');
+        return; // エラーにしないで警告のみ
+      }
+
+      // 3. 通知タイトルとメッセージを作成
+      const senderName = loginUserType === 'customer' ? chatCustomerName : chatStaffName;
+      const senderType = loginUserType === 'customer' ? '顧客' : 'スタッフ';
+      
+      let notificationTitle = `${senderType}からメッセージ`;
+      let notificationBody = messageText;
+
+      // アクションに応じてタイトルをカスタマイズ
+      if (selectedAction === 'collect') {
+        notificationTitle = '検体回収依頼';
+        notificationBody = `${senderName}様から検体回収の依頼があります`;
+      } else if (selectedAction === 'no-collect') {
+        notificationTitle = '検体なしの連絡';
+        notificationBody = `${senderName}様から検体なしとの連絡です`;
+      } else if (selectedAction === 'recollect') {
+        notificationTitle = '再回収依頼';
+        notificationBody = `${senderName}様から再回収の依頼があります`;
+      } else if (selectedAction === 'staff-replay') {
+        notificationTitle = 'スタッフ確認完了';
+        notificationBody = 'スタッフがメッセージを確認しました';
+      }
+
+      // 4. GASにFCM送信リクエストを送信
+      const formData = new URLSearchParams();
+      formData.append('action', 'sendNotification');
+      formData.append('messageId', `chat-${Date.now()}`);
+      formData.append('senderId', String(loginUserId || ''));
+      formData.append('receiverId', recipientIdStr);
+      formData.append('messageText', notificationBody);
+      formData.append('customTitle', notificationTitle);
+      formData.append('customBody', notificationBody);
+      formData.append('targetToken', fcmToken);
+
+      console.log('FCM通知送信中:', {
+        recipient: recipientIdStr,
+        collection: collectionName,
+        title: notificationTitle,
+        body: notificationBody,
+        token: fcmToken.substring(0, 20) + '...',
+        sender: loginUserId
+      });
+
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString()
+      });
+
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('FCM応答の解析に失敗:', responseText);
+        throw new Error(`FCM通知送信に失敗しました: ${responseText}`);
+      }
+
+      if (data.success) {
+        console.log('FCM通知送信成功:', data);
+        setFcmError(''); // エラーをクリア
+      } else {
+        throw new Error(data.error || 'FCM通知送信に失敗しました');
+      }
+
+    } catch (error) {
+      console.error('FCM通知送信エラー:', error);
+      setFcmError(`通知送信失敗: ${error.message}`);
+      // エラーが発生してもチャット機能は継続
+    } finally {
+      setFcmLoading(false);
+    }
+  };
+
   const [selectedAction, setSelectedAction] = useState(null);
 
   const messagesEndRef = useRef(null);
@@ -188,8 +317,6 @@ const Chat = () => {
   const handleActionSelect = (action) => {
     setSelectedAction(action === selectedAction ? null : action);
   };
-
-
 
   const handleSend = async () => {
     if (!selectedAction) return;
@@ -215,10 +342,11 @@ const Chat = () => {
         try {
           const messagesRefStaff = collection(db, 'messages');
           
-          // room_idをドキュメントIDとして指定 > メッセージは固定やし、ドキュメント１個でいいんじゃね？FireStoreの読み込み回数の節約も考慮して
+          // room_idをドキュメントIDとして指定
           const messageDocStaff = doc(messagesRefStaff, message.room_id);
-          // まずドキュメントをサーバータイムスタンプで追加
-          const docRefStaff = await setDoc(messageDocStaff, {
+          
+          // ドキュメントを更新
+          await setDoc(messageDocStaff, {
             room_id: message.room_id,
             sender_id: message.sender_id,
             isCustomer: message.isCustomer,
@@ -228,17 +356,28 @@ const Chat = () => {
             is_staff_read: true,
             read_at: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
             pickup_at: '',
-            date: getDateMMdd() // 追加
+            date: getDateMMdd()
           });
+          
           console.log('メッセージをスタッフが既読したフラグを追加しました:', chatRoomId);
-    
+
+          // FCM通知を送信（顧客に通知）- エラー修正版
+          console.log('スタッフ既読通知送信対象:', {
+            chatCustomerId: chatCustomerId,
+            type: typeof chatCustomerId
+          });
+          
+          if (chatCustomerId) {
+            await sendFCMNotification(chatCustomerId, 'スタッフがメッセージを確認しました', 'staff-replay');
+          } else {
+            console.warn('chatCustomerIdが設定されていないため、FCM通知をスキップしました');
+          }
+
           updateMessageCount();
-          //return docRef.id;
         } catch (error) {
           console.error('エラーが発生しました:', error);
           throw error;
         }
-
       }    
       return;
     }
@@ -265,10 +404,11 @@ const Chat = () => {
     try {
       const messagesRef = collection(db, 'messages');
       
-      // room_idをドキュメントIDとして指定 > メッセージは固定やし、ドキュメント１個でいいんじゃね？FireStoreの読み込み回数の節約も考慮して
+      // room_idをドキュメントIDとして指定
       const messageDoc = doc(messagesRef, chatRoomId);
-      // まずドキュメントをサーバータイムスタンプで追加
-      const docRef = await setDoc(messageDoc, {
+      
+      // ドキュメントを作成/更新
+      await setDoc(messageDoc, {
         room_id: chatRoomId,
         sender_id: loginUserId,
         isCustomer: loginUserType === 'customer',
@@ -278,34 +418,60 @@ const Chat = () => {
         is_staff_read: false,
         read_at: '',
         pickup_at: '',
-        date: getDateMMdd() // 追加
+        date: getDateMMdd()
       });
+      
       console.log('メッセージを追加しました:', chatRoomId);
 
+      // FCM通知を送信（相手に通知）- エラー修正版
+      const recipientId = loginUserType === 'customer' ? chatStaffId : chatCustomerId;
+      console.log('顧客メッセージ通知送信対象:', {
+        recipientId: recipientId,
+        type: typeof recipientId,
+        loginUserType: loginUserType
+      });
+      
+      if (recipientId) {
+        await sendFCMNotification(recipientId, messageText, selectedAction);
+      } else {
+        console.warn('受信者IDが設定されていないため、FCM通知をスキップしました');
+      }
+
       updateMessageCount();
-      //return docRef.id;
     } catch (error) {
       console.error('エラーが発生しました:', error);
       throw error;
     }
-    
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-y-auto  bg-gray-50">
+    <div className="flex flex-col h-screen overflow-y-auto bg-gray-50">
 
       {/* メッセージ */}
-      <div className="flex-1  p-4 " >
-              {messages.map(message => (
-                <ChatMessage key={message.id} message={message} />
-              ))}
+      <div className="flex-1 p-4">
+        {messages.map(message => (
+          <ChatMessage key={message.id} message={message} />
+        ))}
       </div>
 
-      <div className="text-sm text-gray-600">
+      {/* FCM送信状態の表示 */}
+      {fcmLoading && (
+        <div className="px-4 py-2 bg-blue-50 text-blue-700 text-sm">
+          📱 通知送信中...
+        </div>
+      )}
+
+      {fcmError && (
+        <div className="px-4 py-2 bg-red-50 text-red-700 text-sm">
+          ❌ {fcmError}
+        </div>
+      )}
+
+      <div className="text-sm text-gray-600 px-4">
         残り送信可能回数: {remainingMessages} / {MAX_HOURLY_MESSAGES}
       </div>
 
-      {chatCustomerId &&(
+      {chatCustomerId && (
         <div className="bg-white border-t p-4">
           <ActionButtons 
             selectedAction={selectedAction}
