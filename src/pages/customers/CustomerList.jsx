@@ -67,9 +67,11 @@ const CustomerList = () => {
           if (matchingRoom) {
             const selectedAction = messageDoc.data().selectedAction;
             const read_at = messageDoc.data().read_at
+            const is_staff_read = messageDoc.data().is_staff_read; // ←追加済み
 
             console.log("selectedAction",selectedAction)
             console.log("read_at",read_at)
+            console.log("is_staff_Read>>>>" ,is_staff_read)
 
             setCustomers(prevCustomers => {
               const newCustomers = [...prevCustomers];
@@ -83,6 +85,7 @@ const CustomerList = () => {
                   customer: {
                     ...newCustomers[customerIndex].customer,
                     selectedAction: selectedAction,
+                    is_staff_read: is_staff_read,
                     read_at: read_at
                   }
                 }
@@ -205,6 +208,7 @@ const CustomerList = () => {
             phone: '',
             read_at: messagesMap[data.room_id]?.read_at || null,
             selectedAction: messagesMap[data.room_id]?.selectedAction || null,
+            is_staff_read: messagesMap[data.room_id]?.is_staff_read || null,
             isRePickup: data.isRePickup || false
           }
         };
@@ -345,6 +349,15 @@ const CustomerList = () => {
                 <div className="mb-3">
                   <span className="inline-block w-full text-left px-3 py-2 rounded-md text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
                     🔄 {loginUserType === 'customer' ? '再集配対応スタッフ' : '再集配対応顧客'}
+                  </span>
+                </div>
+              )}
+
+              {/* 未返信バッジ（is_staff_readがfalseの場合） */}
+              {customer.customer.is_staff_read === false && (
+                <div className="mb-3">
+                  <span className="inline-block w-full text-left px-3 py-2 rounded-md text-sm font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                    📬 未返信
                   </span>
                 </div>
               )}
