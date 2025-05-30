@@ -277,6 +277,9 @@ const Chat = () => {
         body: formData.toString()
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       const responseText = await response.text();
       let data;
       

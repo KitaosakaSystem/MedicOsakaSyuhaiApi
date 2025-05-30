@@ -62,7 +62,11 @@ const CustomerRegisterForm = () => {
       const isUpdate = docSnap.exists();
       
       // Firestoreに保存（ドキュメントIDとしてcustomerIdを使用）
-      await setDoc(docRef, customerData);
+      if (isUpdate) {
+        await setDoc(docRef, customerData, { merge: true });
+      } else {
+        await setDoc(docRef, customerData);
+      }
       
       // Firebase Authenticationにもユーザーを登録 (既存の場合はスキップ)
       if (!isUpdate) {
@@ -166,6 +170,8 @@ const CustomerRegisterForm = () => {
           let failedCount = 0;
           const logs = [];
           
+          // 修正箇所：CSV一括登録の処理内で、既存データ更新時にマージを使用
+
           // すべての顧客を登録
           for (const row of data) {
             const customerId = row.customerId && row.customerId.trim();
@@ -191,15 +197,24 @@ const CustomerRegisterForm = () => {
               const docSnap = await getDoc(docRef);
               const isUpdate = docSnap.exists();
             
-              // Firestoreに顧客データを保存
-              await setDoc(docRef, {
+              // 更新データの準備
+              const customerData = {
                 userid: customerId,
                 name,
                 password,
                 address: address || '',
                 phone: phone || '',
                 kyoten_id: kyotenId
-              });
+              };
+              
+              // 既存データの場合はマージ、新規の場合は通常の設定
+              if (isUpdate) {
+                // 既存データを更新：fcmTokenなどの既存フィールドを保持
+                await setDoc(docRef, customerData, { merge: true });
+              } else {
+                // 新規データを作成：通常の設定
+                await setDoc(docRef, customerData);
+              }
               
               // Firebase Authenticationにもユーザーを登録（上書きでない場合のみ）
               if (!isUpdate) {
@@ -220,7 +235,7 @@ const CustomerRegisterForm = () => {
               logs.push({ 
                 customerId, 
                 status: isUpdate ? '上書き' : '成功', 
-                message: isUpdate ? '既存データを更新しました' : '新規登録しました' 
+                message: isUpdate ? '既存データを更新しました（fcmTokenなど既存フィールドは保持）' : '新規登録しました' 
               });
             } catch (error) {
               logs.push({ customerId, status: '失敗', message: error.message || 'エラーが発生しました' });

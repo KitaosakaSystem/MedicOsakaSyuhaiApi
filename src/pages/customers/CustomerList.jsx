@@ -313,38 +313,42 @@ const CustomerList = () => {
             className="bg-white rounded-lg shadow cursor-pointer hover:bg-gray-50 transition-colors"
           >
             <div className="p-4">
+              {/* 顧客名と検体状況バッジ */}
               <div className="flex justify-between items-start mb-2">
                 <h2 className="text-base font-medium">
                   {customer.customer.customer_id + ' ' + customer.customer.customer_name}
                 </h2>
-                <div className="flex items-center space-x-2">
-                  {customer.customer.isRePickup && (
-                    <span className="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
-                      再集配
-                    </span>
-                  )}
-                  <span 
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      customer.customer.selectedAction === 'collect'
-                        ? 'bg-green-100 text-green-800'
-                        : customer.customer.selectedAction === 'recollect'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : customer.customer.selectedAction === 'no-collect'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {customer.customer.selectedAction === 'collect'
-                      ? '検体あり'
+                <span 
+                  className={`px-2 py-1 rounded-full text-xs ${
+                    customer.customer.selectedAction === 'collect'
+                      ? 'bg-green-100 text-green-800'
                       : customer.customer.selectedAction === 'recollect'
-                      ? '再集配あり'
+                      ? 'bg-yellow-100 text-yellow-800'
                       : customer.customer.selectedAction === 'no-collect'
-                      ? '検体なし'
-                      : '未選択'}
-                  </span>
-                </div>
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {customer.customer.selectedAction === 'collect'
+                    ? '検体あり'
+                    : customer.customer.selectedAction === 'recollect'
+                    ? '再集配あり'
+                    : customer.customer.selectedAction === 'no-collect'
+                    ? '検体なし'
+                    : '未選択'}
+                </span>
               </div>
 
+              {/* 再集配対応顧客バッジ（顧客名の下に横長で表示） */}
+              {customer.customer.isRePickup && (
+                <div className="mb-3">
+                  <span className="inline-block w-full text-left px-3 py-2 rounded-md text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                    🔄 再集配対応顧客
+                  </span>
+                </div>
+              )}
+
+              {/* スタッフ向け住所・電話番号表示 */}
               {loginUserType === 'staff' && (
                 <>
                   <div className="flex items-center text-gray-600 mb-2">
@@ -358,15 +362,15 @@ const CustomerList = () => {
                 </>
               )}
 
+              {/* 返信状況バッジ */}
+              <div className="flex justify-end">
                 <span 
-                  className={`px-2 py-1 rounded-full text-xs flex justify-end  ${
+                  className={`px-2 py-1 rounded-full text-xs ${
                     customer.read_at ? 'bg-green-100 text-green-800': customer.selectedAction ? 'bg-yellow-100 text-yellow-800' : ''}`}
                 >
                   {customer.read_at ? '返信済み' : customer.selectedAction ? '未読': ''}
                 </span>
-
-
-
+              </div>
             </div>
           </div>
         ))}
