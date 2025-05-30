@@ -344,14 +344,16 @@ const CustomerList = () => {
                 </span>
               </div>
 
-              {/* 再集配対応顧客バッジ（顧客名の下に横長で表示） */}
-              {customer.customer.isRePickup && (
-                <div className="mb-3">
-                  <span className="inline-block w-full text-left px-3 py-2 rounded-md text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                    🔄 {loginUserType === 'customer' ? '再集配対応スタッフ' : '再集配対応顧客'}
-                  </span>
-                </div>
-              )}
+              {/* 集配対応バッジ（常に表示） */}
+              <div className="mb-3">
+                <span className={`inline-block w-full text-left px-3 py-2 rounded-md text-sm font-medium border ${
+                  customer.customer.isRePickup 
+                    ? 'bg-purple-100 text-purple-800 border-purple-200'
+                    : 'bg-blue-100 text-blue-800 border-blue-200'
+                }`}>
+                  {customer.customer.isRePickup ? '🔄' : '📦'} {customer.customer.isRePickup ? '再' : '通常'}集配対応{loginUserType === 'customer' ? 'スタッフ' : '顧客'}
+                </span>
+              </div>
 
               {/* 未返信バッジ（is_staff_readがfalseの場合） */}
               {customer.customer.is_staff_read === false && (
