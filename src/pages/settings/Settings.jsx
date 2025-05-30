@@ -563,24 +563,34 @@ const getCustomerSchedule = async (documentId) => {
               </button>
             </div>
 
-            {/* PWAインストールボタン */}
-            {showPWAButton && !isStandalone && (
-              <div className="pt-4">
+            {/* PWAインストールボタン - デバッグ用に常時表示 */}
+            <div className="pt-4">
+              <div className="mb-2 p-2 bg-gray-100 rounded text-xs">
+                <div>showPWAButton: {showPWAButton.toString()}</div>
+                <div>isStandalone: {isStandalone.toString()}</div>
+                <div>isIOS: {isIOS.toString()}</div>
+                <div>deferredPrompt: {deferredPrompt ? 'あり' : 'なし'}</div>
+              </div>
+              
+              {/* デバッグ用に条件を緩和して表示 */}
+              {(showPWAButton || !isStandalone) && (
                 <button
                   onClick={handlePWAInstall}
                   className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center justify-center gap-2"
                 >
                   {isIOS ? <Smartphone className="w-4 h-4" /> : <Download className="w-4 h-4" />}
                   {isIOS ? 'ホーム画面に追加' : 'アプリをインストール'}
+                  {deferredPrompt ? '' : ' (デバッグ)'}
                 </button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  {isIOS 
-                    ? 'ホーム画面からアプリのように起動できます' 
-                    : 'ホーム画面にアプリアイコンを追加します'
-                  }
-                </p>
-              </div>
-            )}
+              )}
+              
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                {isIOS 
+                  ? 'ホーム画面からアプリのように起動できます' 
+                  : 'ホーム画面にアプリアイコンを追加します'
+                }
+              </p>
+            </div>
 
             {/* 既にインストール済みの場合の表示 */}
             {isStandalone && (
