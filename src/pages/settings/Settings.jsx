@@ -1,5 +1,5 @@
 import React, { useState , useEffect } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Download, Smartphone } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeText } from '../../store/slice/headerTextSlice';
 import { changeChatUserData } from '../../store/slice/chatUserDataSlice';
@@ -38,10 +38,150 @@ const Settings = () => {
   // 選択されたコースをテキストボックスに表示するための状態
   const [routeTextInput, setRouteTextInput] = useState("");
 
+  // PWA関連の状態管理
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showPWAButton, setShowPWAButton] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState('');
+  const [pwaDebugInfo, setPwaDebugInfo] = useState('');
+
   const getCurrentDayOfWeek = () => {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const currentDate = new Date();
     return days[currentDate.getDay()]; // 0 (日曜日) から 6 (土曜日) の数値を返すので、それをインデックスとして使用
+  };
+
+  // PWA関連の初期化
+  useEffect(() => {
+    // デバイス情報の取得
+    const userAgent = navigator.userAgent;
+    let deviceType = '';
+    
+    if (/iPad/.test(userAgent)) {
+      deviceType = 'iPad';
+    } else if (/iPhone/.test(userAgent)) {
+      deviceType = 'iPhone';
+    } else if (/iPod/.test(userAgent)) {
+      deviceType = 'iPod';
+    } else if (/Android/.test(userAgent)) {
+      if (/Mobile/.test(userAgent)) {
+        deviceType = 'Android スマートフォン';
+      } else {
+        deviceType = 'Android タブレット';
+      }
+    } else if (/Windows/.test(userAgent)) {
+      deviceType = 'Windows PC';
+    } else if (/Mac/.test(userAgent)) {
+      deviceType = 'Mac';
+    } else if (/Linux/.test(userAgent)) {
+      deviceType = 'Linux PC';
+    } else {
+      deviceType = 'その他のデバイス';
+    }
+    
+    // ブラウザ情報も追加
+    let browserType = '';
+    if (/Chrome/.test(userAgent) && !/Edge/.test(userAgent)) {
+      browserType = 'Chrome';
+    } else if (/Safari/.test(userAgent) && !/Chrome/.test(userAgent)) {
+      browserType = 'Safari';
+    } else if (/Firefox/.test(userAgent)) {
+      browserType = 'Firefox';
+    } else if (/Edge/.test(userAgent)) {
+      browserType = 'Edge';
+    } else {
+      browserType = 'その他のブラウザ';
+    }
+    
+    setDeviceInfo(`${deviceType} (${browserType})`);
+
+    // iOSの検出
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(isIOSDevice);
+
+    // スタンドアローンモード（既にインストール済み）の検出
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || 
+                           window.navigator.standalone === true;
+    setIsStandalone(isStandaloneMode);
+
+    // PWAデバッグ情報の作成
+    let debugInfo = [];
+    debugInfo.push(`isIOS: ${isIOSDevice}`);
+    debugInfo.push(`isStandalone: ${isStandaloneMode}`);
+    debugInfo.push(`display-mode: ${window.matchMedia('(display-mode: standalone)').matches}`);
+    debugInfo.push(`navigator.standalone: ${window.navigator.standalone}`);
+    debugInfo.push(`deferredPrompt: ${deferredPrompt ? 'あり' : 'なし'}`);
+    debugInfo.push(`showPWAButton: ${showPWAButton}`);
+    
+    // Manifest検出
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    debugInfo.push(`manifest: ${manifestLink ? 'あり' : 'なし'}`);
+    
+    // Service Worker検出
+    debugInfo.push(`serviceWorker: ${'serviceWorker' in navigator ? 'サポート' : '非サポート'}`);
+    
+    // HTTPS検出
+    debugInfo.push(`HTTPS: ${location.protocol === 'https:' || location.hostname === 'localhost'}`);
+    
+    setPwaDebugInfo(debugInfo.join(' | '));
+
+    // Android用のPWAインストールイベント
+    const handleBeforeInstallPrompt = (e) => {
+      console.log('beforeinstallprompt イベントが発生しました');
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowPWAButton(true);
+      
+      // デバッグ情報を更新
+      setPwaDebugInfo(prev => prev + ' | beforeinstallprompt: 発生');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // iOSの場合、スタンドアローンでなければボタンを表示
+    if (isIOSDevice && !isStandaloneMode) {
+      setShowPWAButton(true);
+    }
+
+    // 5秒後にデバッグ情報を更新（beforeinstallpromptが来ない場合の確認用）
+    setTimeout(() => {
+      setPwaDebugInfo(prev => {
+        if (!prev.includes('beforeinstallprompt: 発生')) {
+          return prev + ' | beforeinstallprompt: 未発生';
+        }
+        return prev;
+      });
+    }, 5000);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, [deferredPrompt, showPWAButton]);
+
+  // PWAインストール処理
+  const handlePWAInstall = async () => {
+    if (isIOS) {
+      // iOS用の案内を表示
+      alert(`iPhoneでアプリのようにホーム画面に追加するには：\n\n1. Safari下部の共有ボタン📤をタップ\n2. 「ホーム画面に追加」をタップ\n3. 右上の「追加」をタップ\n\nホーム画面にアプリアイコンが表示されます！`);
+    } else if (deferredPrompt) {
+      // Android用のインストール
+      try {
+        const { outcome } = await deferredPrompt.prompt();
+        console.log(`PWA install prompt was: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+          console.log('PWAがインストールされました');
+          alert('アプリがホーム画面に追加されました！');
+        }
+        
+        setDeferredPrompt(null);
+        setShowPWAButton(false);
+      } catch (error) {
+        console.error('PWAインストールエラー:', error);
+        alert('インストールに失敗しました。もう一度お試しください。');
+      }
+    }
   };
 
   useEffect(() => {
@@ -352,6 +492,14 @@ const getCustomerSchedule = async (documentId) => {
               {loginUserType === 'customer' ? `${loginUserName} 様` : loginUserName}
             </label>
           </div>
+          <div className="space-y-2">
+            <label className="text-base font-medium text-gray-700">デバイス：</label>
+            <label className="text-sm text-gray-600">{deviceInfo}</label>
+          </div>
+          <div className="space-y-2">
+            <label className="text-base font-medium text-gray-700">PWAデバッグ情報：</label>
+            <label className="text-xs text-gray-500 break-all">{pwaDebugInfo}</label>
+          </div>
 
           {loginUserType !== 'customer' && (
             <>
@@ -415,6 +563,37 @@ const getCustomerSchedule = async (documentId) => {
               </button>
             </div>
 
+            {/* PWAインストールボタン */}
+            {showPWAButton && !isStandalone && (
+              <div className="pt-4">
+                <button
+                  onClick={handlePWAInstall}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center justify-center gap-2"
+                >
+                  {isIOS ? <Smartphone className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                  {isIOS ? 'ホーム画面に追加' : 'アプリをインストール'}
+                </button>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  {isIOS 
+                    ? 'ホーム画面からアプリのように起動できます' 
+                    : 'ホーム画面にアプリアイコンを追加します'
+                  }
+                </p>
+              </div>
+            )}
+
+            {/* 既にインストール済みの場合の表示 */}
+            {isStandalone && (
+              <div className="pt-4">
+                <div className="w-full px-4 py-2 bg-green-100 text-green-800 rounded-md flex items-center justify-center gap-2">
+                  <Smartphone className="w-4 h-4" />
+                  アプリとして起動中
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  このアプリは既にホーム画面に追加されています
+                </p>
+              </div>
+            )}
             
             <div className="pt-12 border-t mt-8">
               <button
