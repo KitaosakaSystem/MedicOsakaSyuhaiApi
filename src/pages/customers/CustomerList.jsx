@@ -371,7 +371,13 @@ const CustomerList = () => {
                   </div>
                   <div className="flex items-center text-gray-600 mb-2">
                     <Phone size={16} className="mr-2" />
-                    <span className="text-sm">{customer.customer.phone}</span>
+                    <a 
+                      href={`tel:${customer.customer.phone}`}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {customer.customer.phone}
+                    </a>
                   </div>
                 </>
               )}
