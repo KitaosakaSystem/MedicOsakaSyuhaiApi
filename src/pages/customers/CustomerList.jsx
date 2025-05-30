@@ -365,10 +365,19 @@ const CustomerList = () => {
               {/* スタッフ向け住所・電話番号表示 */}
               {loginUserType === 'staff' && (
                 <>
-                  <div className="flex items-center text-gray-600 mb-2">
+                   <div className="flex items-center text-gray-600 mb-2">
                     <MapPin size={16} className="mr-2" />
-                    <span className="text-sm">{customer.customer.address}</span>
+                    <a 
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.customer.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {customer.customer.address}
+                    </a>
                   </div>
+
                   <div className="flex items-center text-gray-600 mb-2">
                     <Phone size={16} className="mr-2" />
                     <a 
